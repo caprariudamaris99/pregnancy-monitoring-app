@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Medic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Bine ati revenit, Dr. {{ current_user.last_name }}!</h2>
+            <p class="lead">{% if current_user.doctor_profile %}{{ current_user.doctor_profile.specialization }}{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body position-relative">
+                    <h3 class="card-title text-primary">{{ patients_count }}</h3>
+                    <p class="card-text"><i class="fas fa-users"></i> Paciente asociate</p>
+                    <a href="{{ url_for('doctor.patients') }}" class="stretched-link" aria-label="Vezi pacientele asociate"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body position-relative">
+                    <h3 class="card-title text-success">{{ todays_appointments|length }}</h3>
+                    <p class="card-text"><i class="fas fa-calendar"></i> Programari azi</p>
+                    <a href="{{ url_for('doctor.appointments') }}" class="stretched-link" aria-label="Vezi programarile"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body position-relative">
+                    <h3 class="card-title text-warning">{{ pending_requests|length }}</h3>
+                    <p class="card-text"><i class="fas fa-hourglass"></i> Solicitari in asteptare</p>
+                    <a href="{{ url_for('doctor.appointments', status='requested') }}" class="stretched-link" aria-label="Vezi solicitarile in asteptare"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body position-relative">
+                    <h3 class="card-title text-danger">{{ unread_messages }}</h3>
+                    <p class="card-text"><i class="fas fa-envelope"></i> Mesaje necitite</p>
+                    <a href="{{ url_for('doctor.messages') }}" class="stretched-link" aria-label="Vezi mesajele"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Programari azi</h5>
+                </div>
+                <div class="card-body">
+                    {% if todays_appointments %}
+                        <ul class="list-unstyled">
+                            {% for appt in todays_appointments %}
+                                <li class="mb-2 pb-2 border-bottom">
+                                    <strong>{{ appt.appointment_start.strftime('%H:%M') }} - {{ appt.patient.user.first_name }} {{ appt.patient.user.last_name }}</strong>
+                                    <br><small class="text-muted">Durata: {{ appt.duration_minutes }} min</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Nu aveti programari azi.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-hourglass"></i> Solicitari in asteptare</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        <ul class="list-unstyled">
+                            {% for appt in pending_requests %}
+                                <li class="mb-2 pb-2 border-bottom">
+                                    <strong>{{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</strong>
+                                    <br>{{ appt.patient.user.first_name }} {{ appt.patient.user.last_name }}
+                                    <br>
+                                    <small>
+                                        <form method="POST" action="{{ url_for('doctor.confirm_appointment', appointment_id=appt.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirmati aceasta programare?')">Confirma</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('doctor.reject_appointment', appointment_id=appt.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Respingeti aceasta programare?')">Respinge</button>
+                                        </form>
+                                    </small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Nu aveti solicitari in asteptare.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Termeni și Condiții{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <h2 class="mb-4">Termeni și Condiții de Utilizare</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5>1. Descrierea servicului</h5>
+                    <p>
+                        Aplicația "Monitorizare Sarcini" este o platformă medicală pentru monitorizarea sarcinilor cu suportul medicilor 
+                        obstetrici și ginecologi. Serviciul permite pacientelor să urmărească evoluția sarcinii și să comunice cu medicii 
+                        lor asistenți.
+                    </p>
+                    
+                    <h5 class="mt-4">2. Utilizare responsabilă</h5>
+                    <ul>
+                        <li>Vă angajați sus furnizați informații corecte și complete</li>
+                        <li>Nu vă puteți transfera contul altuia</li>
+                        <li>Sunteți responsabil pentru confidențialitatea parolei</li>
+                        <li>Nu utilizați serviciul pentru scopuri ilegale</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">3. Responsabilități medicale</h5>
+                    <ul>
+                        <li>Serviciul nu substituie consultația medicală în cazuri de urgență</li>
+                        <li>În caz de urgență, sunați 112</li>
+                        <li>Medicii și pacienții sunt responsabili pentru acuratețea datelor introduse</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">4. Limitări de răspundere</h5>
+                    <p>
+                        Aplicația se oferă "cum este", fără garanții de orice fel. Nu suntem responsabili pentru pierderi sau daune 
+                        rezultate din utilizarea serviciului.
+                    </p>
+                    
+                    <h5 class="mt-4">5. Confidențialitate și date</h5>
+                    <p>
+                        Vedeți <a href="{{ url_for('common.privacy') }}">Politica de confidențialitate</a> pentru detalii privind 
+                        protecția datelor.
+                    </p>
+                    
+                    <h5 class="mt-4">6. Modificări ale serviciului</h5>
+                    <p>
+                        Aceștia termeni pot fi modificați oricând. Utilizarea continuă a serviciului implică acceptarea noilor termeni.
+                    </p>
+                    
+                    <h5 class="mt-4">7. Legea aplicabilă</h5>
+                    <p>
+                        Aceștia termeni sunt reglementați de legea României. Pentru litigii, sunteți de acord cu jurisdicția instanțelor 
+                        din București.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Informatii Saptamanale{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1"><i class="fas fa-book-open"></i> Informatii Saptamanale</h2>
+                <p class="text-muted mb-0">Saptamana curenta: <strong>{{ current_week }}</strong></p>
+            </div>
+            <a href="{{ url_for('patient.dashboard') }}" class="btn btn-outline-secondary">Inapoi la dashboard</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Toate saptamanile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for week in week_numbers %}
+                            <a href="{{ url_for('patient.weekly_info', week=week) }}"
+                               class="list-group-item list-group-item-action {% if week == selected_week %}active{% endif %}">
+                                Saptamana {{ week }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Saptamana {{ selected_week }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <img
+                            src="{{ url_for('static', filename='images/bg/baby_weeks/week-%02d.png'|format(selected_week)) }}"
+                            alt="Saptamana {{ selected_week }}"
+                            class="img-fluid rounded border"
+                        >
+                    </div>
+
+                    {% if selected_article %}
+                        <h4>{{ selected_article.title }}</h4>
+                        {% for section in selected_article.sections %}
+                            <h5 class="mt-4">{{ section.subtitle }}</h5>
+                            <div>{{ section.content|safe }}</div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="mb-0">Nu exista articol disponibil pentru aceasta saptamana.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

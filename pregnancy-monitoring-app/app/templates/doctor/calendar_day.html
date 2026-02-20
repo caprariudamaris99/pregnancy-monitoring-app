@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Interval Zi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-calendar-day"></i> {{ selected_date.strftime('%d.%m.%Y') }}</h2>
+        <a class="btn btn-outline-primary" href="{{ url_for('doctor.calendar', year=selected_date.year, month=selected_date.month) }}">Inapoi la calendar</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Interval pentru ziua selectata</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('doctor.calendar_day', date_str=selected_date.strftime('%Y-%m-%d')) }}">
+                {{ form.hidden_tag() }}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.work_start_hour.label(class="form-label") }}
+                        {{ form.work_start_hour(class="form-control") }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.work_end_hour.label(class="form-label") }}
+                        {{ form.work_end_hour(class="form-control") }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.slot_duration_minutes.label(class="form-label") }}
+                        {{ form.slot_duration_minutes(class="form-control") }}
+                    </div>
+                </div>
+                <p class="text-muted mb-3">
+                    Daca exista programari in ziua aceasta, intervalul nu poate fi setat astfel incat acele programari sa iasa in afara lui.
+                </p>
+                <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+            </form>
+            {% if has_override %}
+                <form method="POST" action="{{ url_for('doctor.reset_calendar_day', date_str=selected_date.strftime('%Y-%m-%d')) }}" class="mt-3">
+                    <button type="submit" class="btn btn-outline-danger">Revino la intervalul default pentru aceasta zi</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Programari in aceasta zi</h5>
+        </div>
+        <div class="card-body">
+            {% if appointments %}
+                <ul class="list-unstyled mb-0">
+                    {% for appt in appointments %}
+                        <li class="border rounded p-3 mb-2">
+                            <div><strong>{{ appt.appointment_start.strftime('%H:%M') }} - {{ appt.appointment_end.strftime('%H:%M') }}</strong></div>
+                            <div>{{ appt.patient.user.first_name }} {{ appt.patient.user.last_name }}</div>
+                            <div class="small text-muted">Status: {{ appt.status }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-muted">Nu exista programari in aceasta zi.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

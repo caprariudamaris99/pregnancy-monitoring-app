@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Medic{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-md"></i> Profil Medic</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <h5 class="mb-3">Date profesionale</h5>
+
+                        <div class="mb-3">
+                            {{ form.specialization.label(class="form-label") }}
+                            {{ form.specialization(class="form-control") }}
+                            {% for error in form.specialization.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.degree.label(class="form-label") }}
+                            {{ form.degree(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.license_number.label(class="form-label") }}
+                            {{ form.license_number(class="form-control") }}
+                        </div>
+
+                        <hr>
+                        <h5 class="mb-3">Locatie si clinica</h5>
+
+                        <div class="mb-3">
+                            {{ form.clinic_name.label(class="form-label") }}
+                            {{ form.clinic_name(class="form-control") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.clinic_address.label(class="form-label") }}
+                            {{ form.clinic_address(class="form-control") }}
+                        </div>
+
+                        <hr>
+                        <h5 class="mb-3">Program implicit</h5>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.work_start_hour.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.work_start_hour(class="form-control") }}
+                                    <span class="input-group-text">:00</span>
+                                </div>
+                                {% for error in form.work_start_hour.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.work_end_hour.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.work_end_hour(class="form-control") }}
+                                    <span class="input-group-text">:00</span>
+                                </div>
+                                {% for error in form.work_end_hour.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.slot_duration_minutes.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.slot_duration_minutes(class="form-control") }}
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                {% for error in form.slot_duration_minutes.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Program implicit:</strong> Luni - Vineri, {{ form.work_start_hour.data or 9 }}:00 - {{ form.work_end_hour.data or 17 }}:00
+                            <br>
+                            <strong>Durata slot:</strong> {{ form.slot_duration_minutes.data or 30 }} minute
+                        </div>
+
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

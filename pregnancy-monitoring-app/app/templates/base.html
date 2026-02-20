@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pregnancy-monitoring-app{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260216-3">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if current_user.is_authenticated and current_user.role == 'patient' %}patient-theme{% elif current_user.is_authenticated and current_user.role == 'doctor' %}doctor-theme{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if current_user.is_authenticated %}
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('common.dashboard') }}">Home</a>
+                        </li>
+
+                        {% if current_user.role == 'patient' %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="patientMenu" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-heartbeat"></i> Sarcina
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="patientMenu">
+                                    <li><a class="dropdown-item" href="{{ url_for('patient.vital_signs') }}">Parametri vitali</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('patient.medications') }}">Recomandari si medicatie</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('patient.appointments') }}"><i class="fas fa-calendar"></i> Programari</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('patient.messages') }}"><i class="fas fa-envelope"></i> Mesagerie</a>
+                            </li>
+                        {% elif current_user.role == 'doctor' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('doctor.calendar') }}"><i class="fas fa-calendar-alt"></i> Calendar</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('doctor.patients') }}"><i class="fas fa-users"></i> Paciente</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('doctor.appointments') }}"><i class="fas fa-calendar"></i> Programari</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('doctor.messages') }}"><i class="fas fa-envelope"></i> Mesaje</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notifMenu" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell"></i>
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread_notifications_count }}</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifMenu" style="min-width: 320px;">
+                                <li><h6 class="dropdown-header">Notificari</h6></li>
+                                {% if recent_notifications %}
+                                    {% for n in recent_notifications %}
+                                        <li>
+                                            <a class="dropdown-item {% if not n.is_read %}fw-bold{% endif %}" href="{{ url_for('common.notifications') }}">
+                                                <div>{{ n.title }}</div>
+                                                <small class="text-muted">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li><span class="dropdown-item-text text-muted">Nu exista notificari.</span></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('common.notifications') }}">Vezi toate notificarile</a></li>
+                            </ul>
+                        </li>
+
+                        {% if current_user.role == 'patient' %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userMenuPatient" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> {{ current_user.first_name }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuPatient">
+                                    <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Profil cont</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('patient.edit_profile') }}">Profil medical</a></li>
+                                    <li>{% if current_user.patient_profile and current_user.patient_profile.associated_doctor %}
+                                        <span class="dropdown-item-text"><strong>Medic:</strong> Dr. {{ current_user.patient_profile.associated_doctor.user.first_name }} {{ current_user.patient_profile.associated_doctor.user.last_name }}</span>
+                                    {% else %}
+                                        <a class="dropdown-item" href="{{ url_for('patient.select_doctor') }}">Alege medic</a>
+                                    {% endif %}</li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Deconectare</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> {{ current_user.first_name }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                    <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Profil cont</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('doctor.edit_profile') }}">Profil medic</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Deconectare</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Autentificare</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}?role=patient">Inregistrare pacienta</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}?role=doctor">Inregistrare medic</a></li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="brand-strip py-2 text-center">
+        <span class="brand-heart me-2"><i class="fas fa-heart"></i></span>
+        <strong>Pregnancy-monitoring-app</strong>
+    </div>
+
+    <div class="container-fluid mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main class="container-fluid mt-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-light mt-5 py-4 border-top">
+        <div class="container-fluid text-center text-muted">
+            <p>&copy; 2026 Pregnancy-monitoring-app - Aplicatie medicala. Toate drepturile rezervate.</p>
+            <p>
+                <a href="{{ url_for('common.privacy') }}" class="text-decoration-none">Politica de confidentialitate</a> |
+                <a href="{{ url_for('common.terms') }}" class="text-decoration-none">Termeni si conditii</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

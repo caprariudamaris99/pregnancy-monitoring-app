@@ -1,0 +1,59 @@
+venv{% extends "base.html" %}
+
+{% block title %}Pacientele Mele{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="fas fa-users"></i> Pacientele Mele</h2>
+
+    <!-- Search -->
+    <div class="mb-4">
+        <form method="GET" class="input-group mb-3">
+            <input type="text" name="search" class="form-control" placeholder="Căutare după nume..." value="{{ search }}">
+            <button class="btn btn-primary" type="submit">Căutare</button>
+        </form>
+    </div>
+
+    <!-- Patients List -->
+    {% if patients %}
+        <div class="row">
+            {% for patient in patients %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">{{ patient.user.first_name }} {{ patient.user.last_name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Email:</strong> {{ patient.user.email }}</p>
+                            <p><strong>Telefon:</strong> {{ patient.user.phone or '-' }}</p>
+                            
+                            {% if patient.lmp_date %}
+                                {% set preg = patient.calculate_pregnancy_week() %}
+                                {% if preg %}
+                                    <p><strong>Sarcina:</strong> Săptămâna {{ preg[0] }}, ziua {{ preg[1] }}</p>
+                                {% endif %}
+                            {% else %}
+                                <p><strong>Sarcina:</strong> Date incomplete</p>
+                            {% endif %}
+                            
+                            <p><strong>Grup sanguín:</strong> {{ patient.blood_type or '-' }} {{ patient.rh_factor or '-' }}</p>
+                            
+                            <a href="{{ url_for('doctor.patient_details', patient_id=patient.id) }}" class="btn btn-primary">
+                                <i class="fas fa-folder-open"></i> Deschide Dosar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            {% if search %}
+                Nu au fost găsite paciente cu "{{ search }}".
+            {% else %}
+                Nu aveți paciente asociate încă.
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

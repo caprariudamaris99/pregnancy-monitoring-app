@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Dosar Pacient{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Dosar: {{ patient.user.first_name }} {{ patient.user.last_name }}</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('doctor.add_recommendation', patient_id=patient.id) }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Adauga recomandare/medicatie
+            </a>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" role="tab">Informatii</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="vitals-tab" data-bs-toggle="tab" data-bs-target="#vitals" role="tab">Parametri vitali</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="symptoms-tab" data-bs-toggle="tab" data-bs-target="#symptoms" role="tab">Simptome</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" role="tab">Documente</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" role="tab">Recomandari si medicatie</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" role="tab">Mesagerie</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="info" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white"><h5 class="mb-0">Date personale</h5></div>
+                        <div class="card-body">
+                            <p><strong>Email:</strong> {{ patient.user.email }}</p>
+                            <p><strong>Telefon:</strong> {{ patient.user.phone or '-' }}</p>
+                            <p><strong>Data inregistrarii:</strong> {{ patient.user.created_at.strftime('%d.%m.%Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white"><h5 class="mb-0">Date sarcina</h5></div>
+                        <div class="card-body">
+                            {% if pregnancy_info %}<p><strong>Saptamana:</strong> {{ pregnancy_info[0] }} | <strong>Ziua:</strong> {{ pregnancy_info[1] }}</p>{% endif %}
+                            {% if patient.lmp_date %}<p><strong>DUM:</strong> {{ patient.lmp_date.strftime('%d.%m.%Y') }}</p>{% endif %}
+                            {% if patient.due_date %}<p><strong>DPN:</strong> {{ patient.due_date.strftime('%d.%m.%Y') }}</p>{% endif %}
+                            <p><strong>Tip sarcina:</strong> {{ patient.pregnancy_type }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white"><h5 class="mb-0">Profil medical si antecedente</h5></div>
+                        <div class="card-body">
+                            {% if patient.blood_type %}<p><strong>Grupa sanguina:</strong> {{ patient.blood_type }} {{ patient.rh_factor or '' }}</p>{% endif %}
+                            {% if patient.allergies %}<p><strong>Alergii:</strong> {{ patient.allergies }}</p>{% endif %}
+                            {% if patient.chronic_conditions %}<p><strong>Afectiuni cronice:</strong> {{ patient.chronic_conditions }}</p>{% endif %}
+                            {% if patient.permanent_medication %}<p><strong>Tratament permanent declarat:</strong> {{ patient.permanent_medication }}</p>{% endif %}
+                            {% if patient.surgical_history %}<p><strong>Istoric chirurgical:</strong> {{ patient.surgical_history }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="vitals" role="tabpanel">
+            {% if vital_signs %}
+                <table class="table table-striped">
+                    <thead><tr><th>Data</th><th>Greutate (kg)</th><th>Tensiune</th><th>Glicemie (mg/dL)</th><th>Observatii</th></tr></thead>
+                    <tbody>
+                        {% for vital in vital_signs %}
+                            <tr>
+                                <td>{{ vital.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>{{ vital.weight_kg or '-' }}</td>
+                                <td>{% if vital.systolic_bp %}{{ vital.systolic_bp }}/{{ vital.diastolic_bp }}{% else %}-{% endif %}</td>
+                                <td>{{ vital.blood_glucose_mg_dl or '-' }}</td>
+                                <td><small>{{ vital.notes or '-' }}</small></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted">Nu sunt inregistrati parametri vitali.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="symptoms" role="tabpanel">
+            {% if symptoms %}
+                {% for symptom in symptoms %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6><strong>{{ symptom.symptom_type }}</strong> - Intensitate: <span class="badge bg-danger">{{ symptom.intensity }}/10</span></h6>
+                            <p class="mb-1 text-muted">{{ symptom.reported_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                            {% if symptom.observations %}<p class="mb-0">{{ symptom.observations }}</p>{% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Nu sunt raportate simptome.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="documents" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">Incarca document (medic)</h5></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('doctor.upload_patient_document', patient_id=patient.id) }}" enctype="multipart/form-data">
+                        {{ document_form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ document_form.document_file.label(class="form-label") }}{{ document_form.document_file(class="form-control") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.document_type.label(class="form-label") }}{{ document_form.document_type(class="form-select") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.lab_name.label(class="form-label") }}{{ document_form.lab_name(class="form-control") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.document_date.label(class="form-label") }}{{ document_form.document_date(class="form-control", placeholder="YYYY-MM-DD") }}</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Incarca document</button>
+                    </form>
+                </div>
+            </div>
+
+            {% if documents %}
+                <table class="table table-striped">
+                    <thead><tr><th>Tip</th><th>Fisier</th><th>Sursa</th><th>Incarcat de</th><th>Data</th><th>Actiuni</th></tr></thead>
+                    <tbody>
+                        {% for doc in documents %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ doc.document_type }}</span></td>
+                                <td>{{ doc.file_name }}</td>
+                                <td>{{ doc.lab_name or '-' }}</td>
+                                <td>{{ doc.uploaded_by.first_name }} {{ doc.uploaded_by.last_name }}</td>
+                                <td>{{ doc.document_date.strftime('%d.%m.%Y') if doc.document_date else doc.uploaded_at.strftime('%d.%m.%Y') }}</td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('doctor.download_patient_document', patient_id=patient.id, document_id=doc.id) }}">
+                                        <i class="fas fa-download"></i> Descarca
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted">Nu sunt documente incarcate.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="recommendations" role="tabpanel">
+            {% if recommendations %}
+                {% for rec in recommendations %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ rec.title }}</h6>
+                            <form method="POST" action="{{ url_for('doctor.delete_recommendation', patient_id=patient.id, recommendation_id=rec.id) }}" onsubmit="return confirm('Sigur doriti sa stergeti aceasta recomandare?');">
+                                <button type="submit" class="btn btn-sm btn-light text-danger">Sterge</button>
+                            </form>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ rec.description }}</p>
+                            <p><small class="text-muted">Creat: {{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small></p>
+                            {% if rec.visibility == 'internal' %}
+                                <span class="badge bg-secondary">Intern (nu este vizibil pacientei)</span>
+                            {% else %}
+                                <span class="badge bg-success">Vizibil pentru pacienta</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Nu sunt recomandari.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="messages" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">Trimite mesaj pacientei</h5></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('doctor.send_message_to_patient', patient_id=patient.id) }}">
+                        {{ message_form.hidden_tag() }}
+                        <div class="mb-3">{{ message_form.subject.label(class="form-label") }}{{ message_form.subject(class="form-control", placeholder="Subiect (optional)") }}</div>
+                        <div class="mb-3">{{ message_form.content.label(class="form-label") }}{{ message_form.content(class="form-control", rows="4", placeholder="Scrieti mesajul...") }}</div>
+                        <button type="submit" class="btn btn-primary">Trimite mesaj</button>
+                    </form>
+                </div>
+            </div>
+
+            {% if messages %}
+                <div class="card">
+                    <div class="card-body">
+                        {% for msg in messages %}
+                            <div class="border rounded p-3 mb-3 {% if msg.sender_id == current_user.id %}bg-light{% endif %}">
+                                <div class="d-flex justify-content-between">
+                                    <strong>
+                                        {% if msg.sender_id == current_user.id %}Trimis de dvs.{% else %}Primit de la pacienta{% endif %}
+                                    </strong>
+                                    <small class="text-muted">{{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                </div>
+                                <div class="mt-1"><em>{{ msg.subject or '(Fara subiect)' }}</em></div>
+                                <div class="mt-2">{{ msg.content }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted">Nu exista inca mesaje cu aceasta pacienta.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (!tab) return;
+    const trigger = document.querySelector(`[data-bs-target="#${tab}"]`);
+    if (trigger) {
+        new bootstrap.Tab(trigger).show();
+    }
+})();
+</script>
+{% endblock %}

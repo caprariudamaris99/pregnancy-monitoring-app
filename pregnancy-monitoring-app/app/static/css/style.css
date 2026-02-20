@@ -1,0 +1,412 @@
+/* Custom CSS for Pregnancy Monitoring App */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+body.patient-theme {
+    background-image: linear-gradient(rgba(255, 249, 243, 0.9), rgba(255, 249, 243, 0.9)), url("../images/bg/pregnancy_bg.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+body.doctor-theme {
+    background-image:
+        linear-gradient(rgba(242, 248, 255, 0.58), rgba(242, 248, 255, 0.58)),
+        url("/static/images/bg/doctor_profile_bg.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-heart {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.brand-strip {
+    background: rgba(255, 255, 255, 0.86);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body.patient-theme .dropdown-menu {
+    border: 0;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.patient-theme .dropdown-item-text {
+    white-space: normal;
+}
+
+/* Dusty pink palette for patient pages */
+body.patient-theme .navbar.bg-primary {
+    background-color: #aa6f7c !important;
+}
+
+body.patient-theme .card {
+    background-color: #fffafa;
+    box-shadow: 0 4px 14px rgba(118, 74, 84, 0.12);
+}
+
+body.patient-theme .bg-primary {
+    background-color: #b77987 !important;
+}
+
+body.patient-theme .bg-success {
+    background-color: #c58d99 !important;
+}
+
+body.patient-theme .bg-info {
+    background-color: #d5a1ab !important;
+}
+
+body.patient-theme .bg-warning {
+    background-color: #e3bcc4 !important;
+}
+
+body.patient-theme .bg-danger {
+    background-color: #9f5d6d !important;
+}
+
+body.patient-theme .bg-secondary {
+    background-color: #7f5f67 !important;
+}
+
+body.patient-theme .text-dark {
+    color: #4c3339 !important;
+}
+
+body.patient-theme .btn-primary,
+body.patient-theme .btn-success,
+body.patient-theme .btn-info,
+body.patient-theme .btn-warning,
+body.patient-theme .btn-danger {
+    border-color: #a66f7b !important;
+    background-color: #b77b88 !important;
+    color: #fff !important;
+}
+
+body.patient-theme .btn-primary:hover,
+body.patient-theme .btn-success:hover,
+body.patient-theme .btn-info:hover,
+body.patient-theme .btn-warning:hover,
+body.patient-theme .btn-danger:hover {
+    border-color: #945a67 !important;
+    background-color: #945a67 !important;
+}
+
+body.patient-theme .btn-outline-primary {
+    border-color: #aa6f7c !important;
+    color: #aa6f7c !important;
+}
+
+body.patient-theme .btn-outline-primary:hover {
+    background-color: #aa6f7c !important;
+    color: #fff !important;
+}
+
+body.patient-theme .badge.bg-success,
+body.patient-theme .badge.bg-warning,
+body.patient-theme .badge.bg-info,
+body.patient-theme .badge.bg-danger,
+body.patient-theme .badge.bg-secondary {
+    background-color: #8f5f69 !important;
+}
+
+/* Doctor palette inspired by soft blue profile background */
+body.doctor-theme .navbar.bg-primary {
+    background-color: #4f6d95 !important;
+}
+
+body.doctor-theme .card {
+    background-color: rgba(255, 255, 255, 0.93);
+    box-shadow: 0 6px 18px rgba(67, 96, 135, 0.16);
+    border: 1px solid rgba(168, 191, 221, 0.45);
+}
+
+body.doctor-theme .bg-primary {
+    background-color: #6284b4 !important;
+}
+
+body.doctor-theme .bg-success {
+    background-color: #5f8ab8 !important;
+}
+
+body.doctor-theme .bg-info {
+    background-color: #7ea0c7 !important;
+}
+
+body.doctor-theme .bg-warning {
+    background-color: #8ea9cc !important;
+}
+
+body.doctor-theme .bg-danger {
+    background-color: #4d709e !important;
+}
+
+body.doctor-theme .btn-primary,
+body.doctor-theme .btn-success,
+body.doctor-theme .btn-info,
+body.doctor-theme .btn-warning,
+body.doctor-theme .btn-danger {
+    border-color: #5479a8 !important;
+    background-color: #5d83b2 !important;
+    color: #fff !important;
+}
+
+body.doctor-theme .btn-primary:hover,
+body.doctor-theme .btn-success:hover,
+body.doctor-theme .btn-info:hover,
+body.doctor-theme .btn-warning:hover,
+body.doctor-theme .btn-danger:hover {
+    border-color: #43658e !important;
+    background-color: #43658e !important;
+}
+
+body.doctor-theme .btn-outline-primary {
+    border-color: #5479a8 !important;
+    color: #5479a8 !important;
+}
+
+body.doctor-theme .btn-outline-primary:hover {
+    background-color: #5479a8 !important;
+    color: #fff !important;
+}
+
+/* Main content */
+main {
+    min-height: calc(100vh - 200px);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    border: none;
+}
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: 6px;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Tables */
+.table {
+    background-color: white;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Forms */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: 2px solid white;
+}
+
+/* Badges */
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Modal */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+    background-color: #f9f9f9;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    border-top: 1px solid #eee;
+    background-color: #f9f9f9;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.dashboard-card h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-card p {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-collapse {
+        margin-top: 1rem;
+    }
+    
+    .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Chart styles */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+}
+
+/* Utility classes */
+.text-muted {
+    color: #6c757d !important;
+}
+
+.mt-5 {
+    margin-top: 3rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem !important;
+}

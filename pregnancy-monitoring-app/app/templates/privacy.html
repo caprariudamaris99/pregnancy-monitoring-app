@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Politica de Confidențialitate{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <h2 class="mb-4">Politica de Confidențialitate și GDPR</h2>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5>Prezentare generală</h5>
+                    <p>
+                        Aplicația "Monitorizare Sarcini" este dedicată protejării datelor personale și medicale ale utilizatorilor. 
+                        Respectăm în totalitate Regulamentul General privind Protecția Datelor (GDPR).
+                    </p>
+                    
+                    <h5 class="mt-4">1. Colectarea și utilizarea datelor</h5>
+                    <ul>
+                        <li>Colectăm date personale (nume, email, telefon) la înregistrare</li>
+                        <li>Colectăm date medicale (parametri vitali, simptome, documente) pentru monitorizarea sarcinii</li>
+                        <li>Utilizăm datele exclusiv în scopuri medicale și administrative</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">2. Conținerea și confidențialitate</h5>
+                    <ul>
+                        <li>Parolele sunt stocate criptate (hash sha256)</li>
+                        <li>Comunicarea pacientă-medic este criptată</li>
+                        <li>Datele medicale sunt stocate pe servere securizate</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">3. Drepturile utilizatorilor (GDPR)</h5>
+                    <ul>
+                        <li><strong>Dreptul de acces:</strong> Aveți dreptul să accesați datele dumneavoastră</li>
+                        <li><strong>Dreptul de ștergere:</strong> Aveți dreptul să solicitați ștergerea datelor</li>
+                        <li><strong>Dreptul la portabilitate:</strong> Aveți dreptul să exportați datele</li>
+                        <li><strong>Dreptul de obiecție:</strong> Aveți dreptul să vă opuneți procesării datelor</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">4. Partajare și consimțământ</h5>
+                    <ul>
+                        <li>Datele sunt partajate cu medicul doar cu consimțământul explicit</li>
+                        <li>Puteți revoca accesul oricând</li>
+                        <li>Nu partajăm datele cu terți</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">5. Retenție și ștergere</h5>
+                    <ul>
+                        <li>Datele medicale se rețin timp de 10 ani după finalizarea sarcinii</li>
+                        <li>Ștergerea contului duce la anonimizarea datelor</li>
+                        <li>Datele șterse nu pot fi recuperate</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">6. Contact</h5>
+                    <p>Pentru întrebări privind confidențialitatea, contactați: <strong>privacy@monitorizaresarcina.ro</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

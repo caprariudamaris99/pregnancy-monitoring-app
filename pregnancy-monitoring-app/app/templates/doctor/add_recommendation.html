@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Adaugă Recomandare{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-pencil-alt"></i> Adaugă Recomandare Medicală</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3"><strong>Pentru pacientă:</strong> {{ patient.user.first_name }} {{ patient.user.last_name }}</p>
+                    
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {% if form.title.errors %}
+                                {{ form.title(class="form-control is-invalid") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.title(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {% if form.description.errors %}
+                                {{ form.description(class="form-control is-invalid", rows="6") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.description(class="form-control", rows="6") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.visibility.label(class="form-label") }}
+                            {{ form.visibility(class="form-control") }}
+                            <small class="form-text text-muted">
+                                Dacă selectați "vizibil pentru pacientă", aceasta va putea vedea recomandarea. Dacă selectați "intern", doar dumneavoastră o veți putea vedea.
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

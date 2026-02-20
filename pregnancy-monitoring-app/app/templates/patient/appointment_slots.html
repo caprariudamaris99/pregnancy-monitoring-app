@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Selectare Slot de Programare - {{ super() }}{% endblock %}
+
+{% block content %}
+<style>
+    .slot-card {
+        cursor: pointer;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .slot-card:hover {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    }
+    
+    .slot-card.selected {
+        border-color: #28a745;
+        background-color: #e8f5e9;
+    }
+    
+    .slot-time {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .slot-duration {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .slots-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #f9f9f9;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Selectare Slot de Programare</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Doctor Info -->
+                    <div class="alert alert-info" role="alert">
+                        <strong>Medic:</strong> Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}<br>
+                        <strong>Specializare:</strong> {{ doctor.specialization }}<br>
+                        <strong>Data selectată:</strong> {{ appointment_date.strftime('%d.%m.%Y') }}
+                    </div>
+                    
+                    <!-- Available Slots -->
+                    <h5 class="mb-3">Sloturi Disponibile:</h5>
+                    
+                    {% if slots %}
+                        <div class="slots-container" id="slotsContainer">
+                            {% for slot in slots %}
+                                <div class="slot-card" onclick="selectSlot(this, '{{ slot.start.isoformat() }}', '{{ slot.end.isoformat() }}')">
+                                    <div class="slot-time">
+                                        ⏰ {{ slot.start.strftime('%H:%M') }} - {{ slot.end.strftime('%H:%M') }}
+                                    </div>
+                                    <div class="slot-duration">
+                                        Durata: {{ slot.duration }} minute
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">
+                            Nu sunt sloturi disponibile pentru data selectată. Vă rugăm să alegați altă dată.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Notes Section -->
+                    {% if slots %}
+                        <div class="mt-4">
+                            <h5>Note (Opțional):</h5>
+                            <textarea id="notes" class="form-control" rows="3" placeholder="Descrieți motivul consultației, simptomele sau alte informații relevante..."></textarea>
+                        </div>
+                        
+                        <!-- Selected Slot Info -->
+                        <div class="mt-4" id="selectedSlotInfo" style="display: none;">
+                            <div class="alert alert-success">
+                                <strong>Slot selectat:</strong> <span id="selectedSlotText"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Form -->
+                        <form id="confirmForm" method="POST" action="{{ url_for('patient.confirm_appointment_slot') }}" style="display: none;">
+                            <input type="hidden" id="slot_start" name="slot_start">
+                            <input type="hidden" id="slot_end" name="slot_end">
+                            <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                            <input type="hidden" id="notes_hidden" name="notes">
+                        </form>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="button" class="btn btn-success" id="confirmBtn" style="display: none;" onclick="confirmAppointment()">
+                                ✓ Confirmă Programare
+                            </button>
+                            <a href="{{ url_for('patient.request_appointment') }}" class="btn btn-secondary">
+                                ← Înapoi
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="mt-4">
+                            <a href="{{ url_for('patient.request_appointment') }}" class="btn btn-secondary">
+                                ← Înapoi
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedSlotStart = null;
+    let selectedSlotEnd = null;
+    
+    function selectSlot(element, slotStart, slotEnd) {
+        // Remove previous selection
+        document.querySelectorAll('.slot-card').forEach(card => card.classList.remove('selected'));
+        
+        // Add selection to clicked slot
+        element.classList.add('selected');
+        
+        selectedSlotStart = slotStart;
+        selectedSlotEnd = slotEnd;
+        
+        // Parse and format time
+        const startDate = new Date(slotStart);
+        const endDate = new Date(slotEnd);
+        
+        const formattedStart = startDate.toLocaleString('ro-RO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const formattedEnd = endDate.toLocaleTimeString('ro-RO', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        document.getElementById('selectedSlotText').textContent = 
+            `${formattedStart} - ${formattedEnd}`;
+        document.getElementById('selectedSlotInfo').style.display = 'block';
+        document.getElementById('confirmBtn').style.display = 'inline-block';
+        
+        // Update hidden fields
+        document.getElementById('slot_start').value = slotStart;
+        document.getElementById('slot_end').value = slotEnd;
+    }
+    
+    function confirmAppointment() {
+        if (!selectedSlotStart || !selectedSlotEnd) {
+            alert('Vă rugăm selectați un slot.');
+            return;
+        }
+        
+        // Get notes
+        const notes = document.getElementById('notes').value;
+        document.getElementById('notes_hidden').value = notes;
+        
+        // Submit form
+        document.getElementById('confirmForm').submit();
+    }
+</script>
+{% endblock %}

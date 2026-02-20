@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Medical{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-health"></i> Profil Medical și Date Sarcină</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Pregnancy Info -->
+                        <h5 class="mb-3">Date Sarcină</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.lmp_date.label(class="form-label") }}
+                                {{ form.lmp_date(class="form-control") }}
+                                <small class="text-muted">Data Ultimei Menstruații</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.pregnancy_type.label(class="form-label") }}
+                                {{ form.pregnancy_type(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h5 class="mb-3">Profil Hematologic</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.blood_type.label(class="form-label") }}
+                                {{ form.blood_type(class="form-control") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.rh_factor.label(class="form-label") }}
+                                {{ form.rh_factor(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h5 class="mb-3">Istoric Medical</h5>
+                        
+                        <div class="mb-3">
+                            {{ form.allergies.label(class="form-label") }}
+                            {{ form.allergies(class="form-control", rows="3") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.chronic_conditions.label(class="form-label") }}
+                            {{ form.chronic_conditions(class="form-control", rows="3") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.permanent_medication.label(class="form-label") }}
+                            {{ form.permanent_medication(class="form-control", rows="3") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.surgical_history.label(class="form-label") }}
+                            {{ form.surgical_history(class="form-control", rows="3") }}
+                        </div>
+
+                        <hr>
+                        <h5 class="mb-3">Setari notificari</h5>
+                        <div class="mb-3">
+                            {{ form.reminder_hour.label(class="form-label") }}
+                            {{ form.reminder_hour(class="form-control") }}
+                            <small class="text-muted">Implicit este 9. Reminder-ul pentru programari se trimite cu o zi inainte.</small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
