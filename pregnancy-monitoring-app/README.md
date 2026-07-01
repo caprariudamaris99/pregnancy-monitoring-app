@@ -2,6 +2,9 @@
 
 Aplicatie web pentru monitorizarea sarcinii si colaborarea dintre pacienta si medic.
 
+## Link către repository:
+```https://github.com/caprariudamaris99/pregnancy-monitoring-app.git```
+
 
 ### 1. Instalare rapidă
 ```bash
