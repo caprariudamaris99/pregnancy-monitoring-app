@@ -2,22 +2,58 @@
 
 Aplicatie web pentru monitorizarea sarcinii si colaborarea dintre pacienta si medic.
 
+
+### 1. Instalare rapidă
+```bash
+cd pregnancy-monitoring-app
+python -m venv venv
+venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+```
+
+### 2. Setup bază de date
+```bash
+createdb pregnancy_monitoring
+flask db upgrade
+```
+
+### 3. Setări variabile de mediu
+Creați fișierul `.env`:
+```
+FLASK_ENV=development
+FLASK_APP=run.py
+SECRET_KEY=your-secret-key-change-in-production
+DATABASE_URL=postgresql://user:password@localhost:5432/pregnancy_monitoring
+```
+
+### 4. Pornire
+```bash
+python run.py
+```
+
+Accesați: `http://localhost:5000`
+
+
+##  Checklist Configurare
+
+- [ ] Python 3.8+ instalat
+- [ ] PostgreSQL rulând
+- [ ] Virtual environment creat și activat
+- [ ] Dependencies instalate (`pip install -r requirements.txt`)
+- [ ] Bază de date creată
+- [ ] Migrări executate
+- [ ] `.env` fișier configurat
+- [ ] Secret key schimbat (production)
+- [ ] Folderul `uploads/` are permisiuni
+
+
+
 ## Stack tehnologic actual
 - Backend: Python + Flask
 - ORM: SQLAlchemy + Flask-Migrate
 - Baza de date: PostgreSQL
 - Frontend: Jinja2 templates + Bootstrap + JavaScript
 - Autentificare: Flask-Login (session based)
-
-## Rulare locala
-bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-flask db upgrade
-python run.py
-
-Aplicatia ruleaza la `http://localhost:5000`
 
 ### Functionalitati implementate
 
