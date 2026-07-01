@@ -9,7 +9,7 @@
     {% if notifications %}
         <div class="card">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Tip</th>
@@ -27,12 +27,14 @@
                                 <td><strong>{{ n.title }}</strong></td>
                                 <td>{{ n.message or '-' }}</td>
                                 <td>{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-                                <td>{% if n.is_read %}<span class="badge bg-success">Citita</span>{% else %}<span class="badge bg-warning">Necitita</span>{% endif %}</td>
+                                <td>{% if n.is_read %}<span class="badge bg-success">Citita</span>{% else %}<span class="badge bg-warning text-dark">Necitita</span>{% endif %}</td>
                                 <td>
                                     {% if not n.is_read %}
                                         <form method="POST" action="{{ url_for('common.mark_notification_read', notification_id=n.id) }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Marcheaza citita</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Citit</button>
                                         </form>
+                                    {% elif n.type == 'appointment_rejected' %}
+                                        <span class="text-muted small">Programarea a fost eliminata din tabel.</span>
                                     {% endif %}
                                 </td>
                             </tr>

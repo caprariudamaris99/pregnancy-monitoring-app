@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, date
 
 class Medication(db.Model):
     """Model pentru medicație."""
@@ -38,6 +38,10 @@ class Medication(db.Model):
     
     def __repr__(self):
         return f'<Medication {self.name}>'
+
+    @property
+    def is_expired(self):
+        return bool(self.end_date and self.end_date < date.today())
 
 class MedicationReminder(db.Model):
     """Model pentru remindere de medicație."""

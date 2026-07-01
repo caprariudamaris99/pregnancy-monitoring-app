@@ -30,6 +30,13 @@
                             {{ form.phone.label(class="form-label") }}
                             {{ form.phone(class="form-control") }}
                         </div>
+
+                        {% if current_user.role == 'patient' %}
+                        <div class="mb-3">
+                            {{ form.age.label(class="form-label") }}
+                            {{ form.age(class="form-control") }}
+                        </div>
+                        {% endif %}
                         
                         <div class="alert alert-info">
                             <strong>Email:</strong> {{ current_user.email }} (nu poate fi schimbat)

@@ -1,57 +1,104 @@
 {% extends "base.html" %}
 
-{% block title %}Adaugă Recomandare{% endblock %}
+{% block title %}Adauga Recomandare sau Medicatie{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="row mt-4">
-        <div class="col-md-8 mx-auto">
-            <div class="card">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm">
                 <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fas fa-pencil-alt"></i> Adaugă Recomandare Medicală</h4>
+                    <h4 class="mb-0"><i class="fas fa-notes-medical"></i> Adauga recomandare sau medicatie</h4>
                 </div>
                 <div class="card-body">
-                    <p class="mb-3"><strong>Pentru pacientă:</strong> {{ patient.user.first_name }} {{ patient.user.last_name }}</p>
-                    
-                    <form method="POST" novalidate>
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            {{ form.title.label(class="form-label") }}
-                            {% if form.title.errors %}
-                                {{ form.title(class="form-control is-invalid") }}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                    <p class="mb-4"><strong>Pentru pacienta:</strong> {{ patient.user.first_name }} {{ patient.user.last_name }}</p>
+
+                    <ul class="nav nav-tabs mb-4" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#recommendation-pane" type="button">Recomandare</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#medication-pane" type="button">Medicatie</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="recommendation-pane">
+                            <form method="POST" novalidate>
+                                {{ recommendation_form.hidden_tag() }}
+                                <input type="hidden" name="form_type" value="recommendation">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ recommendation_form.start_date.label(class="form-label") }}
+                                        {{ recommendation_form.start_date(class="form-control", type="date") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ recommendation_form.end_date.label(class="form-label") }}
+                                        {{ recommendation_form.end_date(class="form-control", type="date") }}
+                                    </div>
                                 </div>
-                            {% else %}
-                                {{ form.title(class="form-control") }}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form.description.label(class="form-label") }}
-                            {% if form.description.errors %}
-                                {{ form.description(class="form-control is-invalid", rows="6") }}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                <div class="mb-3">
+                                    {{ recommendation_form.title.label(class="form-label") }}
+                                    {{ recommendation_form.title(class="form-control") }}
                                 </div>
-                            {% else %}
-                                {{ form.description(class="form-control", rows="6") }}
-                            {% endif %}
+                                <div class="mb-3">
+                                    {{ recommendation_form.description.label(class="form-label") }}
+                                    {{ recommendation_form.description(class="form-control", rows="5") }}
+                                </div>
+                                <div class="d-grid">
+                                    {{ recommendation_form.submit(class="btn btn-success") }}
+                                </div>
+                            </form>
                         </div>
-                        
-                        <div class="mb-3">
-                            {{ form.visibility.label(class="form-label") }}
-                            {{ form.visibility(class="form-control") }}
-                            <small class="form-text text-muted">
-                                Dacă selectați "vizibil pentru pacientă", aceasta va putea vedea recomandarea. Dacă selectați "intern", doar dumneavoastră o veți putea vedea.
-                            </small>
+
+                        <div class="tab-pane fade" id="medication-pane">
+                            <form method="POST" novalidate>
+                                {{ medication_form.hidden_tag() }}
+                                <input type="hidden" name="form_type" value="medication">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ medication_form.start_date.label(class="form-label") }}
+                                        {{ medication_form.start_date(class="form-control", type="date") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ medication_form.end_date.label(class="form-label") }}
+                                        {{ medication_form.end_date(class="form-control", type="date") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ medication_form.name.label(class="form-label") }}
+                                        {{ medication_form.name(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ medication_form.medication_type.label(class="form-label") }}
+                                        {{ medication_form.medication_type(class="form-select") }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ medication_form.dosage.label(class="form-label") }}
+                                        {{ medication_form.dosage(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ medication_form.frequency.label(class="form-label") }}
+                                        {{ medication_form.frequency(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ medication_form.duration.label(class="form-label") }}
+                                        {{ medication_form.duration(class="form-control") }}
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        {{ medication_form.instructions.label(class="form-label") }}
+                                        {{ medication_form.instructions(class="form-control", rows="4") }}
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        {{ medication_form.warnings.label(class="form-label") }}
+                                        {{ medication_form.warnings(class="form-control", rows="3") }}
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    {{ medication_form.submit(class="btn btn-primary") }}
+                                </div>
+                            </form>
                         </div>
-                        
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-success btn-lg") }}
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

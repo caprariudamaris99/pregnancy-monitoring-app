@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load charts if present
     loadCharts();
+
+    // AI assistant widget
+    initializeAiChat();
 });
 
 /**
@@ -84,6 +87,12 @@ function setupDynamicForms() {
  * Load and render charts
  */
 function loadCharts() {
+    // Skip default placeholder charts when dashboard page provides its own chart data.
+    if (document.querySelector('[data-dashboard-chart]')) {
+        console.log('Skipping default chart initialization for dashboard page.');
+        return;
+    }
+
     // Weight Chart
     const weightCtx = document.getElementById('weightChart');
     if (weightCtx) {
@@ -103,10 +112,21 @@ function loadCharts() {
     }
 }
 
+function destroyExistingChart(ctx) {
+    if (!ctx || typeof Chart === 'undefined') {
+        return;
+    }
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+}
+
 /**
  * Load weight chart
  */
 function loadWeightChart(ctx) {
+    destroyExistingChart(ctx);
     const data = {
         labels: ['Săpt 1', 'Săpt 2', 'Săpt 3', 'Săpt 4', 'Săpt 5'],
         datasets: [{
@@ -146,6 +166,7 @@ function loadWeightChart(ctx) {
  * Load blood pressure chart
  */
 function loadBPChart(ctx) {
+    destroyExistingChart(ctx);
     const data = {
         labels: ['Măs 1', 'Măs 2', 'Măs 3', 'Măs 4', 'Măs 5'],
         datasets: [
@@ -188,6 +209,7 @@ function loadBPChart(ctx) {
  * Load blood glucose chart
  */
 function loadGlucoseChart(ctx) {
+    destroyExistingChart(ctx);
     const data = {
         labels: ['Măs 1', 'Măs 2', 'Măs 3', 'Măs 4', 'Măs 5'],
         datasets: [{
@@ -276,4 +298,164 @@ function exportToCSV(filename) {
 function exportToPDF(filename) {
     console.log('Exporting to PDF: ' + filename);
     // Implementation would depend on the backend and a library like jsPDF
+}
+
+function initializeAiChat() {
+    console.log('initializeAiChat called');
+    const shell = document.querySelector('[data-ai-chat]');
+    if (!shell) {
+        console.log('AI chat shell not found');
+        return;
+    }
+
+    console.log('AI chat shell found, initializing...');
+    const endpoint = shell.dataset.endpoint;
+    const toggle = shell.querySelector('[data-ai-chat-toggle]');
+    const close = shell.querySelector('[data-ai-chat-close]');
+    let panel = shell.querySelector('[data-ai-chat-panel]');
+    let messagesContainer = shell.querySelector('[data-ai-chat-messages]');
+    let form = shell.querySelector('[data-ai-chat-form]');
+    let input = shell.querySelector('[data-ai-chat-input]');
+    let submit = shell.querySelector('[data-ai-chat-submit]');
+    const storageKey = 'patient_ai_chat_history_v1';
+
+    const missing = [];
+    if (!toggle) missing.push('toggle');
+    if (!close) missing.push('close');
+    if (!panel) missing.push('panel');
+    if (!messagesContainer) missing.push('messagesContainer');
+    if (!form) missing.push('form');
+    if (!input) missing.push('input');
+    if (!submit) missing.push('submit');
+    if (missing.length) {
+        console.warn('AI chat widget: missing sub-elements -> ' + missing.join(', '));
+    }
+
+    let history = [];
+    try {
+        history = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+    } catch (error) {
+        history = [];
+    }
+
+    if (messagesContainer) {
+        history.forEach(item => appendAiMessage(messagesContainer, item.role, item.content, item.timestamp));
+    }
+
+    function persistHistory() {
+        sessionStorage.setItem(storageKey, JSON.stringify(history.slice(-12)));
+    }
+
+    function openPanel() {
+        if (!panel) {
+            panel = document.createElement('section');
+            panel.className = 'ai-chat-panel';
+            panel.setAttribute('data-ai-chat-panel', '');
+            panel.innerHTML = '<div class="ai-chat-header"><strong>Asistent medical AI</strong></div><div class="ai-chat-body" data-ai-chat-messages></div>';
+            shell.appendChild(panel);
+            messagesContainer = panel.querySelector('[data-ai-chat-messages]');
+        }
+        panel.hidden = false;
+        shell.classList.add('is-open');
+        if (input) input.focus();
+    }
+
+    function closePanel() {
+        if (panel) panel.hidden = true;
+        shell.classList.remove('is-open');
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            const isHidden = !panel || panel.hidden;
+            if (isHidden) {
+                openPanel();
+            } else {
+                closePanel();
+            }
+        });
+    }
+
+    if (close) {
+        close.addEventListener('click', closePanel);
+    }
+
+    if (form) {
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (!input) return;
+            const message = input.value.trim();
+            if (!message) {
+                return;
+            }
+
+            const userItem = {
+                role: 'user',
+                content: message,
+                timestamp: new Date().toLocaleString('ro-RO'),
+            };
+            history.push(userItem);
+            if (messagesContainer) appendAiMessage(messagesContainer, userItem.role, userItem.content, userItem.timestamp);
+            persistHistory();
+            input.value = '';
+            if (input) input.disabled = true;
+            if (submit) submit.disabled = true;
+
+            const loadingNode = messagesContainer ? appendAiMessage(messagesContainer, 'assistant', 'Se genereaza raspunsul...', '') : null;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message,
+                        conversation: history.slice(-8),
+                    }),
+                });
+                const data = await response.json();
+                if (loadingNode) loadingNode.remove();
+
+                const replyText = data.reply || data.error || 'Nu am primit un raspuns.';
+                const assistantItem = {
+                    role: 'assistant',
+                    content: replyText,
+                    timestamp: data.timestamp || new Date().toLocaleString('ro-RO'),
+                };
+                history.push(assistantItem);
+                if (messagesContainer) appendAiMessage(messagesContainer, assistantItem.role, assistantItem.content, assistantItem.timestamp);
+                persistHistory();
+            } catch (error) {
+                if (loadingNode) loadingNode.remove();
+                const assistantItem = {
+                    role: 'assistant',
+                    content: 'Asistentul AI nu este disponibil momentan. Incearca din nou sau contacteaza medicul pentru o recomandare sigura.',
+                    timestamp: new Date().toLocaleString('ro-RO'),
+                };
+                history.push(assistantItem);
+                if (messagesContainer) appendAiMessage(messagesContainer, assistantItem.role, assistantItem.content, assistantItem.timestamp);
+                persistHistory();
+            } finally {
+                if (input) input.disabled = false;
+                if (submit) submit.disabled = false;
+                if (input) input.focus();
+            }
+        });
+    }
+}
+
+function appendAiMessage(container, role, content, timestamp) {
+    const bubble = document.createElement('div');
+    bubble.className = `ai-chat-bubble ${role === 'user' ? 'ai-chat-bubble-user' : 'ai-chat-bubble-assistant'}`;
+    bubble.textContent = content;
+
+    if (timestamp) {
+        const meta = document.createElement('small');
+        meta.className = 'ai-chat-meta';
+        meta.textContent = timestamp;
+        bubble.appendChild(meta);
+    }
+
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+    return bubble;
 }

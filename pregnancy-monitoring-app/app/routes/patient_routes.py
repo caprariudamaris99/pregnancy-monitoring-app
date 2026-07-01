@@ -50,6 +50,48 @@ def _get_or_create_notification_preference(user_id):
     return pref
 
 
+def _cleanup_expired_patient_items(patient):
+    """Sterge automat recomandarile si medicatia expirate."""
+    today = datetime.utcnow().date()
+    changed = False
+
+    expired_medications = Medication.query.filter(
+        Medication.patient_id == patient.id,
+        Medication.end_date.isnot(None),
+        Medication.end_date < today,
+    ).all()
+    for medication in expired_medications:
+        db.session.delete(medication)
+        changed = True
+
+    expired_recommendations = MedicalRecommendation.query.filter(
+        MedicalRecommendation.patient_id == patient.id,
+        MedicalRecommendation.end_date < today,
+    ).all()
+    for recommendation in expired_recommendations:
+        db.session.delete(recommendation)
+        changed = True
+
+    if changed:
+        db.session.commit()
+
+
+def _mark_completed_appointments(patient):
+    """Actualizeaza programarile trecute ca realizate."""
+    now = datetime.utcnow()
+    completed = Appointment.query.filter(
+        Appointment.patient_id == patient.id,
+        Appointment.status == AppointmentStatus.CONFIRMED.value,
+        Appointment.appointment_end < now,
+    ).all()
+    if not completed:
+        return
+
+    for appointment in completed:
+        appointment.status = AppointmentStatus.COMPLETED.value
+    db.session.commit()
+
+
 def _create_patient_reminder_notifications(patient):
     """Genereaza reminder-e la accesarea dashboard-ului, cu deduplicare."""
     pref = _get_or_create_notification_preference(current_user.id)
@@ -117,49 +159,51 @@ def _get_current_pregnancy_week(patient):
 @bp.route('/dashboard')
 @login_required
 def dashboard():
-    """Dashboard pacientă - vizualizare principală."""
+    """Dashboard pacienta - vizualizare principala."""
     if current_user.role != 'patient':
         flash('Acces neautorizat.', 'danger')
         return redirect(url_for('common.dashboard'))
-    
+
     patient = current_user.patient_profile
     if not patient:
-        flash('Profil de pacientă nu găsit.', 'warning')
+        flash('Profil de pacienta nu a fost gasit.', 'warning')
         return redirect(url_for('patient.edit_profile'))
-    
-    # Calculare săptămâni de sarcină
+
+    _cleanup_expired_patient_items(patient)
+    _mark_completed_appointments(patient)
+
     current_week, pregnancy_info = _get_current_pregnancy_week(patient)
-    
-    # Ultimele măsurători
+
     latest_vital_signs = VitalSign.query.filter_by(patient_id=patient.id).order_by(VitalSign.measurement_date.desc()).limit(5).all()
     chart_points = list(reversed(latest_vital_signs))
+    # Ensure chart_data has safe values; convert None to 0 for numeric fields
     chart_data = {
         'labels': [v.measurement_date.strftime('%d.%m.%Y') for v in chart_points],
-        'weights': [v.weight_kg for v in chart_points],
-        'systolic': [v.systolic_bp for v in chart_points],
-        'diastolic': [v.diastolic_bp for v in chart_points],
-        'glucose': [v.blood_glucose_mg_dl for v in chart_points],
+        'weights': [float(v.weight_kg) if v.weight_kg is not None else 0 for v in chart_points],
+        'systolic': [float(v.systolic_bp) if v.systolic_bp is not None else 0 for v in chart_points],
+        'diastolic': [float(v.diastolic_bp) if v.diastolic_bp is not None else 0 for v in chart_points],
+        'glucose': [float(v.blood_glucose_mg_dl) if v.blood_glucose_mg_dl is not None else 0 for v in chart_points],
     }
-    
-    # Programări viitoare
+
     upcoming_appointments = Appointment.query.filter_by(patient_id=patient.id).filter(
         Appointment.appointment_start >= datetime.utcnow()
     ).order_by(Appointment.appointment_start).limit(5).all()
-    
-    # Recomandari vizibile
+
     visible_recommendations = MedicalRecommendation.query.filter_by(
-        patient_id=patient.id,
-        visibility='patient'
+        patient_id=patient.id
     ).order_by(MedicalRecommendation.created_at.desc()).all()
+    active_medications = Medication.query.filter_by(
+        patient_id=patient.id,
+        is_active=True,
+    ).order_by(Medication.start_date.desc(), Medication.created_at.desc()).all()
 
     _create_patient_reminder_notifications(patient)
 
-    # Notificări necitite
     unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
-    
     current_week_article = sfaturi_sarcina.get(current_week)
 
-    return render_template('patient/dashboard.html',
+    return render_template(
+        'patient/dashboard.html',
         patient=patient,
         pregnancy_info=pregnancy_info,
         current_week=current_week,
@@ -168,7 +212,9 @@ def dashboard():
         chart_data=chart_data,
         upcoming_appointments=upcoming_appointments,
         visible_recommendations=visible_recommendations,
-        unread_messages=unread_messages)
+        active_medications=active_medications,
+        unread_messages=unread_messages,
+    )
 
 @bp.route('/weekly-info')
 @login_required
@@ -272,6 +318,7 @@ def edit_profile():
     form = PatientProfileForm()
     pref = _get_or_create_notification_preference(current_user.id)
     if form.validate_on_submit():
+        patient.age = form.age.data
         patient.lmp_date = form.lmp_date.data
         patient.pregnancy_type = form.pregnancy_type.data
         patient.blood_type = form.blood_type.data
@@ -290,9 +337,12 @@ def edit_profile():
         db.session.commit()
         
         flash('Profil medical actualizat cu succes.', 'success')
+        if request.args.get('onboarding') == '1':
+            return redirect(url_for('common.dashboard'))
         return redirect(url_for('patient.dashboard'))
     
     elif request.method == 'GET':
+        form.age.data = patient.age
         if patient.lmp_date:
             form.lmp_date.data = patient.lmp_date
         form.pregnancy_type.data = patient.pregnancy_type
@@ -410,20 +460,23 @@ def documents():
 @bp.route('/appointments', methods=['GET', 'POST'])
 @login_required
 def appointments():
-    """Gestionare programări consultații."""
+    """Gestionare program?ri consulta?ii."""
     patient = current_user.patient_profile
     if not patient:
         flash('Doar conturile cu profil de pacienta pot accesa programarile.', 'danger')
         return redirect(url_for('common.dashboard'))
-    
-    # Filtrare programări
+
+    _mark_completed_appointments(patient)
+
     status_filter = request.args.get('status', 'all')
+    query = Appointment.query.filter(Appointment.patient_id == patient.id)
     if status_filter == 'all':
-        appointments_list = Appointment.query.filter_by(patient_id=patient.id).order_by(Appointment.appointment_start).all()
+        query = query.filter(Appointment.status != AppointmentStatus.REJECTED.value)
     else:
-        appointments_list = Appointment.query.filter_by(patient_id=patient.id, status=status_filter).order_by(Appointment.appointment_start).all()
-    
-    return render_template('patient/appointments.html', appointments=appointments_list, status=status_filter)
+        query = query.filter(Appointment.status == status_filter)
+
+    appointments_list = query.order_by(Appointment.appointment_start).all()
+    return render_template('patient/appointments.html', appointments=appointments_list, status=status_filter, now=datetime.utcnow())
 
 @bp.route('/appointments/new', methods=['GET', 'POST'])
 @login_required
@@ -564,19 +617,25 @@ def confirm_appointment_slot():
 @bp.route('/medications')
 @login_required
 def medications():
-    """Vizualizare medicație."""
+    """Vizualizare medicatie."""
     if current_user.role != 'patient':
         return redirect(url_for('common.dashboard'))
-    
+
     patient = current_user.patient_profile
+    _cleanup_expired_patient_items(patient)
+
     visible_recommendations = MedicalRecommendation.query.filter_by(
-        patient_id=patient.id,
-        visibility='patient'
+        patient_id=patient.id
     ).order_by(MedicalRecommendation.created_at.desc()).all()
-    
+    active_medications = Medication.query.filter_by(
+        patient_id=patient.id,
+        is_active=True,
+    ).order_by(Medication.start_date.desc(), Medication.created_at.desc()).all()
+
     return render_template(
         'patient/medications.html',
-        visible_recommendations=visible_recommendations
+        visible_recommendations=visible_recommendations,
+        active_medications=active_medications,
     )
 
 @bp.route('/messages', methods=['GET', 'POST'])
@@ -590,7 +649,6 @@ def messages():
     doctor = patient.associated_doctor if patient else None
     form = MessageForm()
     document_form = DocumentUploadForm()
-    reply_subject = request.args.get('reply_subject', type=str)
 
     if request.method == 'POST':
         if not doctor:
@@ -601,7 +659,7 @@ def messages():
             new_message = Message(
                 sender_id=current_user.id,
                 recipient_id=doctor.user_id,
-                subject=form.subject.data,
+                subject=None,
                 content=form.content.data
             )
             db.session.add(new_message)
@@ -618,13 +676,15 @@ def messages():
             flash('Mesajul a fost trimis cu succes.', 'success')
             return redirect(url_for('patient.messages'))
         flash('Mesajul nu a putut fi trimis. Verificati campurile.', 'danger')
-    elif reply_subject:
-        form.subject.data = reply_subject
     
-    messages = Message.query.filter(
-        (Message.sender_id == current_user.id) | (Message.recipient_id == current_user.id)
-    ).order_by(Message.sent_at.desc()).all()
-    patient_documents = Document.query.filter_by(patient_id=patient.id).order_by(Document.uploaded_at.desc()).limit(10).all()
+    messages = []
+    patient_documents = []
+    if doctor:
+        messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.recipient_id == doctor.user_id))
+            | ((Message.sender_id == doctor.user_id) & (Message.recipient_id == current_user.id))
+        ).order_by(Message.sent_at.desc()).all()
+        patient_documents = Document.query.filter_by(patient_id=patient.id).order_by(Document.uploaded_at.desc()).all()
     
     return render_template(
         'patient/messages.html',

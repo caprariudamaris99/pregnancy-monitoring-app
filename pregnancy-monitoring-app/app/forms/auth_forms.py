@@ -1,7 +1,8 @@
+from flask import request
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
-from app.models.user import User
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, NumberRange, Optional
+from app.models.user import User, UserRole
 
 class RegistrationForm(FlaskForm):
     """Formular de înregistrare."""
@@ -9,6 +10,7 @@ class RegistrationForm(FlaskForm):
     last_name = StringField('Nume', validators=[DataRequired(), Length(min=2, max=100)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     phone = StringField('Telefon', validators=[Length(min=10, max=20)])
+    patient_age = IntegerField('Varsta (ani)', validators=[Optional(), NumberRange(min=0, max=120)])
     password = PasswordField('Parolă', validators=[DataRequired(), Length(min=8)])
     password_confirm = PasswordField('Confirmare parolă',
         validators=[DataRequired(), EqualTo('password', message='Parolele trebuie să coincidă.')])
@@ -20,6 +22,17 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('Email-ul este deja folosit.')
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+
+        role = request.args.get('role', UserRole.PATIENT.value)
+        if role == UserRole.PATIENT.value and self.patient_age.data is None:
+            self.patient_age.errors.append('Varsta este obligatorie pentru o pacientă.')
+            return False
+
+        return True
 
 class LoginForm(FlaskForm):
     """Formular de autentificare."""
@@ -45,4 +58,5 @@ class UpdateProfileForm(FlaskForm):
     first_name = StringField('Prenume', validators=[DataRequired(), Length(min=2, max=100)])
     last_name = StringField('Nume', validators=[DataRequired(), Length(min=2, max=100)])
     phone = StringField('Telefon', validators=[Length(min=10, max=20)])
+    age = IntegerField('Varsta (ani)', validators=[Optional(), NumberRange(min=0, max=120)])
     submit = SubmitField('Salvare modificări')

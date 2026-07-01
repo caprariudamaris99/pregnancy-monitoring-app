@@ -8,6 +8,9 @@ class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
     
+    # Date personale
+    age = db.Column(db.Integer, nullable=True)
+
     # Date sarcină
     lmp_date = db.Column(db.Date, nullable=True)  # DUM - Data Ultimei Menstruații
     pregnancy_type = db.Column(db.String(20), default='single')  # single/multiple

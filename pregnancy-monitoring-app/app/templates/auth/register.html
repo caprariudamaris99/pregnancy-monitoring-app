@@ -62,6 +62,22 @@
                             {{ form.phone.label(class="form-label") }}
                             {{ form.phone(class="form-control") }}
                         </div>
+
+                        {% if request.args.get('role') == 'patient' %}
+                        <div class="mb-3">
+                            {{ form.patient_age.label(class="form-label") }}
+                            {% if form.patient_age.errors %}
+                                {{ form.patient_age(class="form-control is-invalid") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.patient_age.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.patient_age(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         
                         <div class="mb-3">
                             {{ form.password.label(class="form-label") }}

@@ -1,123 +1,72 @@
 {% extends "base.html" %}
 
-{% block title %}Programări Consultații{% endblock %}
+{% block title %}Programari Consultatii{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-calendar-check"></i> Programări Consultații</h2>
+        <h2><i class="fas fa-calendar-check"></i> Programari Consultatii</h2>
         <a href="{{ url_for('patient.request_appointment') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nouă Programare
+            <i class="fas fa-plus"></i> Noua Programare
         </a>
     </div>
 
-    <!-- Filter by status -->
     <div class="mb-4">
         <a href="{{ url_for('patient.appointments', status='all') }}" class="btn btn-outline-secondary">Toate</a>
         <a href="{{ url_for('patient.appointments', status='requested') }}" class="btn btn-outline-warning">Solicitate</a>
         <a href="{{ url_for('patient.appointments', status='confirmed') }}" class="btn btn-outline-success">Confirmate</a>
-        <a href="{{ url_for('patient.appointments', status='rejected') }}" class="btn btn-outline-danger">Respinse</a>
-        <a href="{{ url_for('patient.appointments', status='cancelled') }}" class="btn btn-outline-dark">Anulate</a>
+        <a href="{{ url_for('patient.appointments', status='completed') }}" class="btn btn-outline-info">Realizate</a>
     </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            {% if appointments %}
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Programări ({{ appointments|length }})</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Data și Ora</th>
-                                    <th>Medic</th>
-                                    <th>Clinică</th>
-                                    <th>Status</th>
-                                    <th>Durată</th>
-                                    <th>Acțiuni</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for appt in appointments %}
-                                    <tr>
-                                        <td><strong>{{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</strong></td>
-                                        <td>Dr. {{ appt.doctor.user.last_name }}</td>
-                                        <td>{{ appt.doctor.clinic_name or '-' }}</td>
-                                        <td>
-                                            {% if appt.status == 'confirmed' %}
-                                                <span class="badge bg-success">✓ Confirmată</span>
-                                            {% elif appt.status == 'requested' %}
-                                                <span class="badge bg-warning">⏳ Solicitată</span>
-                                            {% elif appt.status == 'rejected' %}
-                                                <span class="badge bg-danger">✗ Respinsă</span>
-                                            {% elif appt.status == 'cancelled' %}
-                                                <span class="badge bg-dark">✗ Anulată</span>
-                                            {% elif appt.status == 'completed' %}
-                                                <span class="badge bg-info">✓ Realizată</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">{{ appt.status }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ appt.duration_minutes }} min</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailsModal{{ appt.id }}">
-                                                <i class="fas fa-info-circle"></i> Detalii
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            {% else %}
-                <div class="alert alert-info">
-                    Nu aveți programări{% if status != 'all' %} cu status "{{ status }}"{% endif %}.
-                    <a href="{{ url_for('patient.request_appointment') }}">Cere o programare nouă!</a>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Modals for appointment details -->
-{% for appt in appointments %}
-<div class="modal fade" id="detailsModal{{ appt.id }}" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalii Programare</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    {% if appointments %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Programari ({{ appointments|length }})</h5>
             </div>
-            <div class="modal-body">
-                <p><strong>Data:</strong> {{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</p>
-                <p><strong>Ora Sfârşit:</strong> {{ appt.appointment_end.strftime('%H:%M') }}</p>
-                <p><strong>Medic:</strong> Dr. {{ appt.doctor.user.first_name }} {{ appt.doctor.user.last_name }}</p>
-                <p><strong>Specializare:</strong> {{ appt.doctor.specialization }}</p>
-                {% if appt.doctor.clinic_name %}<p><strong>Clinică:</strong> {{ appt.doctor.clinic_name }}</p>{% endif %}
-                <p>
-                    <strong>Status:</strong>
-                    {% if appt.status == 'confirmed' %}
-                        <span class="badge bg-success">Confirmată</span>
-                    {% elif appt.status == 'requested' %}
-                        <span class="badge bg-warning">Solicitată</span>
-                    {% elif appt.status == 'rejected' %}
-                        <span class="badge bg-danger">Respinsă</span>
-                    {% elif appt.status == 'cancelled' %}
-                        <span class="badge bg-dark">Anulată</span>
-                    {% else %}
-                        <span class="badge bg-secondary">{{ appt.status }}</span>
-                    {% endif %}
-                </p>
-                {% if appt.notes %}<p><strong>Note de programare:</strong> {{ appt.notes }}</p>{% endif %}                {% if appt.doctor_recommendations %}<p><strong>Recomandări:</strong> {{ appt.doctor_recommendations }}</p>{% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Închide</button>
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Data si Ora</th>
+                            <th>Medic</th>
+                            <th>Clinica</th>
+                            <th>Status</th>
+                            <th>Durata</th>
+                            <th>Observatii</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in appointments %}
+                            {% set is_completed = appt.status == 'completed' or appt.appointment_end < now %}
+                            <tr class="{% if is_completed %}text-muted opacity-75{% endif %}">
+                                <td><strong>{{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</strong></td>
+                                <td>Dr. {{ appt.doctor.user.last_name }}</td>
+                                <td>{{ appt.doctor.clinic_name or '-' }}</td>
+                                <td>
+                                    {% if is_completed %}
+                                        <span class="badge bg-secondary">Realizata</span>
+                                    {% elif appt.status == 'confirmed' %}
+                                        <span class="badge bg-success">Confirmata</span>
+                                    {% elif appt.status == 'requested' %}
+                                        <span class="badge bg-warning text-dark">Solicitata</span>
+                                    {% elif appt.status == 'rejected' %}
+                                        <span class="badge bg-danger">Respinsa</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ appt.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ appt.duration_minutes }} min</td>
+                                <td>{% if appt.doctor_recommendations %}{{ appt.doctor_recommendations }}{% elif appt.notes %}{{ appt.notes }}{% else %}-{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
+    {% else %}
+        <div class="alert alert-info">
+            Nu aveti programari{% if status != 'all' %} cu status "{{ status }}"{% endif %}.
+        </div>
+    {% endif %}
 </div>
-{% endfor %}
 {% endblock %}

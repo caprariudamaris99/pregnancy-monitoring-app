@@ -1,7 +1,5 @@
 # Pregnancy Monitoring App - Quick Start Guide
 
-## ⚡ Porniți aplicația în 5 minute
-
 ### 1. Instalare rapidă
 ```bash
 cd pregnancy-monitoring-app
@@ -12,7 +10,6 @@ pip install -r requirements.txt
 
 ### 2. Setup bază de date
 ```bash
-# Asigurați-vă că PostgreSQL rulează
 createdb pregnancy_monitoring
 flask db upgrade
 ```
@@ -33,9 +30,9 @@ python run.py
 
 Accesați: `http://localhost:5000`
 
-## 🔐 Conturi Test
+##  Conturi Test
 
-### Crea
+## Crea
 
 1. **Pacientă:**
    - Email: `patient@example.com`
@@ -45,7 +42,7 @@ Accesați: `http://localhost:5000`
    - Email: `doctor@example.com`
    - Parolă: `password123`
 
-## 📋 Checklist Configurare
+##  Checklist Configurare
 
 - [ ] Python 3.8+ instalat
 - [ ] PostgreSQL rulând
@@ -57,7 +54,7 @@ Accesați: `http://localhost:5000`
 - [ ] Secret key schimbat (production)
 - [ ] Folderul `uploads/` are permisiuni
 
-## 🧪 Teste Rapide
+##  Teste Rapide
 
 ```bash
 # Test import models
@@ -74,14 +71,6 @@ flask db downgrade
 flask db upgrade
 ```
 
-## 📚 Resurse
-
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
-- [Bootstrap 5](https://getbootstrap.com/docs/5.0/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-
-## 🆘 Ajutor Rapid
 
 **Erori comune:**
 
@@ -96,15 +85,3 @@ SQLALCHEMY_DATABASE_URI not configured
 → Setați DATABASE_URL în .env
 ```
 
-## ✨ Următorii pași
-
-1. Explorați dashboard-ul
-2. Creați conturi test
-3. Completați profiluri medicale
-4. Adăugați măsurători și simptome
-5. Testați mesageria
-6. Verificați exporturile
-
----
-
-**Happy coding! 🎉**

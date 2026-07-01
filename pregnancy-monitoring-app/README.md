@@ -1,69 +1,43 @@
-# Pregnancy Monitoring App - Aplicație pentru Monitorizarea Sarcinilor
+# Pregnancy Monitoring App
 
-## Descriere Project
-Aplicație web pentru monitorizarea sarcinilor, care permite gravidelor să urmărească parametri medicali și medicilor să gestioneze pacientele.
+Aplicatie web pentru monitorizarea sarcinii si colaborarea dintre pacienta si medic.
 
-## Stack Tehnologic
-- **Backend**: Node.js + Express.js
-- **Frontend**: React.js + TypeScript + Tailwind CSS
-- **Database**: MongoDB
-- **Autentificare**: JWT (JSON Web Tokens)
-- **Validare**: Joi
-- **Email**: Nodemailer
+## Stack tehnologic actual
+- Backend: Python + Flask
+- ORM: SQLAlchemy + Flask-Migrate
+- Baza de date: PostgreSQL
+- Frontend: Jinja2 templates + Bootstrap + JavaScript
+- Autentificare: Flask-Login (session based)
 
-## Structură Proiect
-```
-pregnancy-monitoring-app/
-├── backend/              # API REST Node.js + Express
-├── frontend/             # Aplicație React
-├── docs/                 # Documentație și scheme
-└── README.md
-```
+## Rulare locala
+bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+flask db upgrade
+python run.py
 
-## Funcționalități Principale
+Aplicatia ruleaza la `http://localhost:5000`
 
-### Gravidă (Pacientă)
-1. Autentificare și gestionare cont
-2. Profil medical și date de sarcină
-3. Monitorizare parametri (greutate, tensiune, glicemie)
-4. Înregistrare simptome
-5. Programare consultații
-6. Gestionare medicație
-7. Comunicare cu medicul
-8. Grafice și trenduri
+### Functionalitati implementate
+
+### Pacienta
+- inregistrare, autentificare, profil medical
+- urmarire sarcina (saptamana curenta + informatii pe saptamani)
+- inregistrare parametri vitali (greutate, tensiune, glicemie)
+- raportare simptome
+- incarcare si descarcare documente medicale
+- programari pe sloturi disponibile
+- mesagerie cu medicul
+- notificari in aplicatie (programari/medicatie/mesaje)
 
 ### Medic
-1. Autentificare și profil profesional
-2. Gestionare paciente
-3. Vizualizare dosare paciente
-4. Gestionare disponibilitate și programări
-5. Upload documente medicale
-6. Mesagerie cu pacientele
-7. Recomandări medicale
+- gestionare profil profesional si program de lucru
+- gestionare exceptii de disponibilitate
+- vizualizare paciente asociate
+- confirmare/respingere programari
+- recomandari medicale
+- mesagerie cu pacientele
 
-## Instalare și Rulare
 
-### Backend
-```bash
-cd backend
-npm install
-npm run dev
-```
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
-
-## Documentație
-Vezi folder `/docs` pentru:
-- Diagrama ER (bază de date)
-- API Documentation
-- User Journey Maps
-- Specificații de securitate
-
----
-**Data**: februarie 2026
-**Status**: În dezvoltare

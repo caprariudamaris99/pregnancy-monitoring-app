@@ -23,12 +23,6 @@
             <button class="nav-link" id="vitals-tab" data-bs-toggle="tab" data-bs-target="#vitals" role="tab">Parametri vitali</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="symptoms-tab" data-bs-toggle="tab" data-bs-target="#symptoms" role="tab">Simptome</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" role="tab">Documente</button>
-        </li>
-        <li class="nav-item" role="presentation">
             <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" role="tab">Recomandari si medicatie</button>
         </li>
         <li class="nav-item" role="presentation">
@@ -45,6 +39,7 @@
                         <div class="card-body">
                             <p><strong>Email:</strong> {{ patient.user.email }}</p>
                             <p><strong>Telefon:</strong> {{ patient.user.phone or '-' }}</p>
+                            {% if patient.age is not none %}<p><strong>Varsta:</strong> {{ patient.age }} ani</p>{% endif %}
                             <p><strong>Data inregistrarii:</strong> {{ patient.user.created_at.strftime('%d.%m.%Y') }}</p>
                         </div>
                     </div>
@@ -75,9 +70,49 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white"><h5 class="mb-0">Observatii / Istoric</h5></div>
+                        <div class="card-body">
+                            <label for="doctor-observations" class="form-label">Adauga observatii si istoric relevant</label>
+                            <textarea id="doctor-observations" class="form-control" rows="6" placeholder="Scrie observatii, antecedente relevante, note de follow-up pentru pacient..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="tab-pane fade" id="vitals" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Grafice parametri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="doctor-chart-card">
+                                <h6 class="mb-3">Greutate</h6>
+                                <div style="height:260px;"><canvas id="weightChart" data-dashboard-chart="true"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="doctor-chart-card">
+                                <h6 class="mb-3">Tensiune</h6>
+                                <div style="height:260px;"><canvas id="bpChart" data-dashboard-chart="true"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="doctor-chart-card">
+                                <h6 class="mb-3">Glicemie</h6>
+                                <div style="height:260px;"><canvas id="glucoseChart" data-dashboard-chart="true"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {% if vital_signs %}
                 <table class="table table-striped">
                     <thead><tr><th>Data</th><th>Greutate (kg)</th><th>Tensiune</th><th>Glicemie (mg/dL)</th><th>Observatii</th></tr></thead>
@@ -98,88 +133,64 @@
             {% endif %}
         </div>
 
-        <div class="tab-pane fade" id="symptoms" role="tabpanel">
-            {% if symptoms %}
-                {% for symptom in symptoms %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6><strong>{{ symptom.symptom_type }}</strong> - Intensitate: <span class="badge bg-danger">{{ symptom.intensity }}/10</span></h6>
-                            <p class="mb-1 text-muted">{{ symptom.reported_date.strftime('%d.%m.%Y %H:%M') }}</p>
-                            {% if symptom.observations %}<p class="mb-0">{{ symptom.observations }}</p>{% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-muted">Nu sunt raportate simptome.</p>
-            {% endif %}
-        </div>
-
-        <div class="tab-pane fade" id="documents" role="tabpanel">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white"><h5 class="mb-0">Incarca document (medic)</h5></div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('doctor.upload_patient_document', patient_id=patient.id) }}" enctype="multipart/form-data">
-                        {{ document_form.hidden_tag() }}
-                        <div class="row">
-                            <div class="col-md-6 mb-3">{{ document_form.document_file.label(class="form-label") }}{{ document_form.document_file(class="form-control") }}</div>
-                            <div class="col-md-6 mb-3">{{ document_form.document_type.label(class="form-label") }}{{ document_form.document_type(class="form-select") }}</div>
-                            <div class="col-md-6 mb-3">{{ document_form.lab_name.label(class="form-label") }}{{ document_form.lab_name(class="form-control") }}</div>
-                            <div class="col-md-6 mb-3">{{ document_form.document_date.label(class="form-label") }}{{ document_form.document_date(class="form-control", placeholder="YYYY-MM-DD") }}</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Incarca document</button>
-                    </form>
-                </div>
-            </div>
-
-            {% if documents %}
-                <table class="table table-striped">
-                    <thead><tr><th>Tip</th><th>Fisier</th><th>Sursa</th><th>Incarcat de</th><th>Data</th><th>Actiuni</th></tr></thead>
-                    <tbody>
-                        {% for doc in documents %}
-                            <tr>
-                                <td><span class="badge bg-secondary">{{ doc.document_type }}</span></td>
-                                <td>{{ doc.file_name }}</td>
-                                <td>{{ doc.lab_name or '-' }}</td>
-                                <td>{{ doc.uploaded_by.first_name }} {{ doc.uploaded_by.last_name }}</td>
-                                <td>{{ doc.document_date.strftime('%d.%m.%Y') if doc.document_date else doc.uploaded_at.strftime('%d.%m.%Y') }}</td>
-                                <td>
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('doctor.download_patient_document', patient_id=patient.id, document_id=doc.id) }}">
-                                        <i class="fas fa-download"></i> Descarca
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="text-muted">Nu sunt documente incarcate.</p>
-            {% endif %}
-        </div>
-
         <div class="tab-pane fade" id="recommendations" role="tabpanel">
-            {% if recommendations %}
-                {% for rec in recommendations %}
-                    <div class="card mb-3">
-                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">{{ rec.title }}</h6>
-                            <form method="POST" action="{{ url_for('doctor.delete_recommendation', patient_id=patient.id, recommendation_id=rec.id) }}" onsubmit="return confirm('Sigur doriti sa stergeti aceasta recomandare?');">
-                                <button type="submit" class="btn btn-sm btn-light text-danger">Sterge</button>
-                            </form>
-                        </div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white"><h5 class="mb-0">Medicatie activa</h5></div>
                         <div class="card-body">
-                            <p>{{ rec.description }}</p>
-                            <p><small class="text-muted">Creat: {{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small></p>
-                            {% if rec.visibility == 'internal' %}
-                                <span class="badge bg-secondary">Intern (nu este vizibil pacientei)</span>
+                            {% if medications %}
+                                {% for med in medications %}
+                                    <div class="border rounded p-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-start gap-3">
+                                            <div>
+                                                <strong>{{ med.name }}</strong>
+                                                <div class="text-muted small">{{ med.start_date.strftime('%d.%m.%Y') }} - {{ med.end_date.strftime('%d.%m.%Y') if med.end_date else '-' }}</div>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('doctor.delete_medication', patient_id=patient.id, medication_id=med.id) }}" onsubmit="return confirm('Sigur doriti sa stergeti aceasta medicatie?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Sterge</button>
+                                            </form>
+                                        </div>
+                                        <div class="mt-2"><strong>Doza:</strong> {{ med.dosage or '-' }}</div>
+                                        <div><strong>Frecventa:</strong> {{ med.frequency or '-' }}</div>
+                                        <div><strong>Durata:</strong> {{ med.duration or '-' }}</div>
+                                        {% if med.instructions %}<div class="mt-2">{{ med.instructions }}</div>{% endif %}
+                                        {% if med.warnings %}<div class="mt-2 text-danger"><strong>Atentionari:</strong> {{ med.warnings }}</div>{% endif %}
+                                    </div>
+                                {% endfor %}
                             {% else %}
-                                <span class="badge bg-success">Vizibil pentru pacienta</span>
+                                <p class="text-muted">Nu exista medicatie activa.</p>
                             {% endif %}
                         </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-muted">Nu sunt recomandari.</p>
-            {% endif %}
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white"><h5 class="mb-0">Recomandari active</h5></div>
+                        <div class="card-body">
+                            {% if recommendations %}
+                                {% for rec in recommendations %}
+                                    <div class="border rounded p-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-start gap-3">
+                                            <div>
+                                                <strong>{{ rec.title }}</strong>
+                                                <div class="text-muted small">{{ rec.start_date.strftime('%d.%m.%Y') }} - {{ rec.end_date.strftime('%d.%m.%Y') }}</div>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('doctor.delete_recommendation', patient_id=patient.id, recommendation_id=rec.id) }}" onsubmit="return confirm('Sigur doriti sa stergeti aceasta recomandare?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Sterge</button>
+                                            </form>
+                                        </div>
+                                        <p class="mt-2 mb-0">{{ rec.description }}</p>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">Nu sunt recomandari active.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="tab-pane fade" id="messages" role="tabpanel">
@@ -195,15 +206,47 @@
                 </div>
             </div>
 
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white"><h5 class="mb-0">Incarca document medical</h5></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('doctor.upload_patient_document', patient_id=patient.id) }}" enctype="multipart/form-data">
+                        {{ document_form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ document_form.document_file.label(class="form-label") }}{{ document_form.document_file(class="form-control") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.document_type.label(class="form-label") }}{{ document_form.document_type(class="form-select") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.lab_name.label(class="form-label") }}{{ document_form.lab_name(class="form-control") }}</div>
+                            <div class="col-md-6 mb-3">{{ document_form.document_date.label(class="form-label") }}{{ document_form.document_date(class="form-control", placeholder="YYYY-MM-DD") }}</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Incarca document</button>
+                    </form>
+
+                    {% if documents %}
+                        <hr>
+                        <h6>Ultimele documente</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for doc in documents %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ doc.file_name }} <small class="text-muted">({{ doc.document_type }})</small></span>
+                                    <span>
+                                        <small class="text-muted me-3">{{ doc.uploaded_at.strftime('%d.%m.%Y') }}</small>
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('doctor.download_patient_document', patient_id=patient.id, document_id=doc.id) }}">
+                                            <i class="fas fa-download"></i> Descarca
+                                        </a>
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
             {% if messages %}
                 <div class="card">
                     <div class="card-body">
                         {% for msg in messages %}
                             <div class="border rounded p-3 mb-3 {% if msg.sender_id == current_user.id %}bg-light{% endif %}">
                                 <div class="d-flex justify-content-between">
-                                    <strong>
-                                        {% if msg.sender_id == current_user.id %}Trimis de dvs.{% else %}Primit de la pacienta{% endif %}
-                                    </strong>
+                                    <strong>{% if msg.sender_id == current_user.id %}Trimis de dvs.{% else %}Primit de la pacienta{% endif %}</strong>
                                     <small class="text-muted">{{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</small>
                                 </div>
                                 <div class="mt-1"><em>{{ msg.subject or '(Fara subiect)' }}</em></div>
@@ -221,13 +264,118 @@
 {% endblock %}
 
 {% block extra_js %}
+<script id="patient-details-chart-data" type="application/json">{{ {'labels': chart_data.labels, 'weights': chart_data.weights, 'systolic': chart_data.systolic, 'diastolic': chart_data.diastolic, 'glucose': chart_data.glucose} | tojson }}</script>
+
 <script>
 (() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    if (!tab) return;
-    const trigger = document.querySelector(`[data-bs-target="#${tab}"]`);
-    if (trigger) {
-        new bootstrap.Tab(trigger).show();
+    if (tab) {
+        const trigger = document.querySelector(`[data-bs-target="#${tab}"]`);
+        if (trigger) {
+            new bootstrap.Tab(trigger).show();
+        }
+    }
+
+    // Read chart data from DOM to avoid inline template tokens in executable JS
+    const detailsRawEl = document.getElementById('patient-details-chart-data');
+    const detailsParsed = detailsRawEl ? JSON.parse(detailsRawEl.textContent || '{}') : {};
+    const details_labels = detailsParsed.labels || [];
+    const details_weights = detailsParsed.weights || [];
+    const details_systolic = detailsParsed.systolic || [];
+    const details_diastolic = detailsParsed.diastolic || [];
+    const details_glucose = detailsParsed.glucose || [];
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    color: '#5a3a43',
+                    font: {
+                        size: 11,
+                        weight: '600'
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#6e4b54',
+                    font: {
+                        size: 10
+                    },
+                    maxRotation: 0,
+                    minRotation: 0
+                },
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#6e4b54',
+                    font: {
+                        size: 10
+                    }
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.08)'
+                }
+            }
+        }
+    };
+
+    if (document.getElementById('weightChart')) {
+        new Chart(document.getElementById('weightChart'), {
+            type: 'line',
+            data: {
+                labels: details_labels,
+                datasets: [{
+                    label: 'kg',
+                    data: details_weights,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.12)',
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: commonOptions
+        });
+    }
+
+    if (document.getElementById('bpChart')) {
+        new Chart(document.getElementById('bpChart'), {
+            type: 'line',
+            data: {
+                labels: details_labels,
+                datasets: [
+                    { label: 'Sistolica', data: details_systolic, borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.08)', tension: 0.35, fill: true },
+                    { label: 'Diastolica', data: details_diastolic, borderColor: '#0dcaf0', backgroundColor: 'rgba(13, 202, 240, 0.08)', tension: 0.35, fill: true }
+                ]
+            },
+            options: commonOptions
+        });
+    }
+
+    if (document.getElementById('glucoseChart')) {
+        new Chart(document.getElementById('glucoseChart'), {
+            type: 'line',
+            data: {
+                labels: details_labels,
+                datasets: [{
+                    label: 'mg/dL',
+                    data: details_glucose,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.12)',
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: commonOptions
+        });
     }
 })();
 </script>

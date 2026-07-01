@@ -6,32 +6,56 @@
 <div class="container-fluid">
     <h2 class="mb-4"><i class="fas fa-notes-medical"></i> Recomandari si medicatie</h2>
 
-    <div class="card">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0">Recomandari si medicatie</h5>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Medicatie activa</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_medications %}
+                        {% for med in active_medications %}
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between gap-3">
+                                    <strong>{{ med.name }}</strong>
+                                    <span class="text-muted small">{{ med.start_date.strftime('%d.%m.%Y') }} - {{ med.end_date.strftime('%d.%m.%Y') if med.end_date else '-' }}</span>
+                                </div>
+                                <div class="mt-2"><strong>Doza:</strong> {{ med.dosage or '-' }}</div>
+                                <div><strong>Frecventa:</strong> {{ med.frequency or '-' }}</div>
+                                <div><strong>Durata:</strong> {{ med.duration or '-' }}</div>
+                                {% if med.instructions %}<div class="mt-2">{{ med.instructions }}</div>{% endif %}
+                                {% if med.warnings %}<div class="mt-2 text-danger"><strong>Atentionari:</strong> {{ med.warnings }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info mb-0">Nu aveti medicatie activa in acest moment.</div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            {% if visible_recommendations %}
-                {% for rec in visible_recommendations %}
-                    <div class="card mb-3">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">{{ rec.title }}</h6>
-                            <span class="badge bg-success">Vizibila pentru pacienta</span>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-2">{{ rec.description }}</p>
-                            <small class="text-muted">
-                                Adaugata la {{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}
-                                {% if rec.doctor and rec.doctor.user %}
-                                    de Dr. {{ rec.doctor.user.first_name }} {{ rec.doctor.user.last_name }}
-                                {% endif %}
-                            </small>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="alert alert-info mb-0">Nu aveti recomandari vizibile in acest moment.</div>
-            {% endif %}
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Recomandari active</h5>
+                </div>
+                <div class="card-body">
+                    {% if visible_recommendations %}
+                        {% for rec in visible_recommendations %}
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between gap-3">
+                                    <strong>{{ rec.title }}</strong>
+                                    <span class="text-muted small">{{ rec.start_date.strftime('%d.%m.%Y') }} - {{ rec.end_date.strftime('%d.%m.%Y') }}</span>
+                                </div>
+                                <p class="mb-2 mt-2">{{ rec.description }}</p>
+                                <small class="text-muted">Adaugata la {{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info mb-0">Nu aveti recomandari active in acest moment.</div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

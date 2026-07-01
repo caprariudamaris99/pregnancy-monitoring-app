@@ -9,11 +9,12 @@ from wtforms import (
     SubmitField,
     TextAreaField,
 )
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, NumberRange, Optional
 
 
 class PatientProfileForm(FlaskForm):
     """Formular pentru profil pacienta."""
+    age = IntegerField("Varsta (ani)", validators=[Optional(), NumberRange(min=0, max=120)])
     lmp_date = DateField("Data Ultimei Menstruatii (DUM)", validators=[DataRequired()])
     pregnancy_type = SelectField(
         "Tip sarcina",

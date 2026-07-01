@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, IntegerField, SubmitField, TextAreaField, SelectField
+from wtforms import StringField, IntegerField, SubmitField, TextAreaField, SelectField, DateField
 from wtforms.validators import DataRequired, Optional, Length
 
 class DoctorProfileForm(FlaskForm):
@@ -43,6 +43,8 @@ class DocumentUploadForm(FlaskForm):
 class MedicationForm(FlaskForm):
     """Formular pentru medicație."""
     name = StringField('Nume medicament', validators=[DataRequired(), Length(max=150)])
+    start_date = DateField('Din data de', validators=[DataRequired()], format='%Y-%m-%d')
+    end_date = DateField('Pana in data de', validators=[DataRequired()], format='%Y-%m-%d')
     dosage = StringField('Doză', validators=[Optional(), Length(max=100)])
     frequency = StringField('Frecvență', validators=[Optional(), Length(max=100)])
     duration = StringField('Durată', validators=[Optional(), Length(max=100)])
@@ -56,10 +58,9 @@ class MedicationForm(FlaskForm):
 class RecommendationForm(FlaskForm):
     """Formular pentru recomandări medicale."""
     title = StringField('Titlu recomandare', validators=[DataRequired(), Length(min=3, max=200)])
+    start_date = DateField('Din data de', validators=[DataRequired()], format='%Y-%m-%d')
+    end_date = DateField('Pana in data de', validators=[DataRequired()], format='%Y-%m-%d')
     description = TextAreaField('Descriere', validators=[DataRequired(), Length(min=10)])
-    visibility = SelectField('Vizibilitate',
-        choices=[('patient', 'Vizibil pentru pacientă'), ('internal', 'Intern (doar medic)')],
-        validators=[DataRequired()])
     submit = SubmitField('Salvare recomandare')
 
 class MessageForm(FlaskForm):
@@ -69,3 +70,4 @@ class MessageForm(FlaskForm):
     attachment = FileField('Atașament opțional',
         validators=[FileAllowed(['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'], 'Tipuri permise')])
     submit = SubmitField('Trimite mesaj')
+

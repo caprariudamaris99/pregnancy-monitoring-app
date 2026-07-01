@@ -27,6 +27,11 @@
         border: 1px solid #efd8dd;
         border-radius: 12px;
     }
+    /* Ensure AI chat widget is always visible on top */
+    .ai-chat-shell,
+    .ai-chat-panel {
+        z-index: 999999 !important;
+    } 
 </style>
 
 <div class="container-fluid">
@@ -79,18 +84,18 @@
                 </div>
                 <div class="card-body">
                     <h6 class="mb-3">Recomandari si medicatie</h6>
-                    {% if visible_recommendations %}
+                    {% if active_medications or visible_recommendations %}
                         <div class="mb-4">
                             {% for rec in visible_recommendations[:3] %}
                                 <div class="mb-3 pb-3 border-bottom">
                                     <strong>{{ rec.title }}</strong>
                                     <p class="mb-1">{{ rec.description }}</p>
-                                    <small class="text-muted">{{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                    <small class="text-muted">Valabila {{ rec.start_date.strftime('%d.%m.%Y') }} - {{ rec.end_date.strftime('%d.%m.%Y') }}</small>
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-muted">Nu aveti recomandari vizibile.</p>
+                        <p class="text-muted">Nu aveti recomandari sau medicatie activa.</p>
                     {% endif %}
                 </div>
             </div>
@@ -137,7 +142,7 @@
                             <div class="chart-card-soft p-3">
                                 <h6 class="mb-3">Greutate</h6>
                                 <div class="chart-panel">
-                                    <canvas id="weightChart"></canvas>
+                                    <canvas id="weightChart" data-dashboard-chart="true"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -145,7 +150,7 @@
                             <div class="chart-card-soft p-3">
                                 <h6 class="mb-3">Tensiune</h6>
                                 <div class="chart-panel">
-                                    <canvas id="bpChart"></canvas>
+                                    <canvas id="bpChart" data-dashboard-chart="true"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -153,7 +158,7 @@
                             <div class="chart-card-soft p-3">
                                 <h6 class="mb-3">Glicemie</h6>
                                 <div class="chart-panel">
-                                    <canvas id="glucoseChart"></canvas>
+                                    <canvas id="glucoseChart" data-dashboard-chart="true"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -167,15 +172,45 @@
 {% endblock %}
 
 {% block extra_js %}
+<script id="dashboard-data" type="application/json">{{ {'labels': chart_data.labels|list, 'weights': chart_data.weights|list, 'systolic': chart_data.systolic|list, 'diastolic': chart_data.diastolic|list, 'glucose': chart_data.glucose|list} | tojson }}</script>
+
 <script>
 (() => {
-    const labels = {{ chart_data.labels | tojson }};
-    const weights = {{ chart_data.weights | tojson }};
-    const systolic = {{ chart_data.systolic | tojson }};
-    const diastolic = {{ chart_data.diastolic | tojson }};
-    const glucose = {{ chart_data.glucose | tojson }};
+    let dashboard_labels = [];
+    let dashboard_weights = [];
+    let dashboard_systolic = [];
+    let dashboard_diastolic = [];
+    let dashboard_glucose = [];
 
-    const commonOptions = {
+    try {
+        const raw = document.getElementById('dashboard-data');
+        if (!raw || !raw.textContent) {
+            console.warn('Dashboard data element missing or empty, charts will not render');
+        } else {
+            const jsonText = raw.textContent.trim();
+            console.log('Dashboard JSON text:', jsonText.substring(0, 150));
+
+            if (jsonText.startsWith('{' + '{')) {
+                console.error('Dashboard JSON appears unrendered. Load this page through Flask, not file://.');
+                throw new Error('Dashboard template not rendered by server');
+            }
+
+            const parsed = JSON.parse(jsonText);
+            dashboard_labels = (parsed.labels && Array.isArray(parsed.labels)) ? parsed.labels : [];
+            dashboard_weights = (parsed.weights && Array.isArray(parsed.weights)) ? parsed.weights : [];
+            dashboard_systolic = (parsed.systolic && Array.isArray(parsed.systolic)) ? parsed.systolic : [];
+            dashboard_diastolic = (parsed.diastolic && Array.isArray(parsed.diastolic)) ? parsed.diastolic : [];
+            dashboard_glucose = (parsed.glucose && Array.isArray(parsed.glucose)) ? parsed.glucose : [];
+
+            console.log('Dashboard chart data loaded successfully:', { labels: dashboard_labels.length, weights: dashboard_weights.length, systolic: dashboard_systolic.length });
+        }
+    } catch (err) {
+        console.error('Dashboard chart data parsing error:', err);
+    }
+
+    // Charts rendering (may be skipped if data is empty)
+    try {
+        const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -211,68 +246,75 @@
                 grid: { color: 'rgba(170, 111, 124, 0.12)' }
             }
         }
-    };
+        };
 
-    if (document.getElementById('weightChart')) {
-        new Chart(document.getElementById('weightChart'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'kg',
-                    data: weights,
-                    borderColor: '#b86b7a',
-                    backgroundColor: 'rgba(184, 107, 122, 0.15)',
-                    tension: 0.35,
-                    fill: true
-                }]
-            },
-            options: commonOptions
-        });
-    }
-
-    if (document.getElementById('bpChart')) {
-        new Chart(document.getElementById('bpChart'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'Sistolica',
-                        data: systolic,
-                        borderColor: '#9f5d70',
-                        backgroundColor: 'rgba(159, 93, 112, 0.08)',
-                        tension: 0.35
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js is not loaded; dashboard charts will be skipped.');
+        } else {
+            if (document.getElementById('weightChart')) {
+                new Chart(document.getElementById('weightChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dashboard_labels,
+                        datasets: [{
+                            label: 'kg',
+                            data: dashboard_weights,
+                            borderColor: '#b86b7a',
+                            backgroundColor: 'rgba(184, 107, 122, 0.15)',
+                            tension: 0.35,
+                            fill: true
+                        }]
                     },
-                    {
-                        label: 'Diastolica',
-                        data: diastolic,
-                        borderColor: '#d18a98',
-                        backgroundColor: 'rgba(209, 138, 152, 0.08)',
-                        tension: 0.35
-                    }
-                ]
-            },
-            options: commonOptions
-        });
-    }
+                    options: commonOptions
+                });
+            }
 
-    if (document.getElementById('glucoseChart')) {
-        new Chart(document.getElementById('glucoseChart'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'mg/dL',
-                    data: glucose,
-                    borderColor: '#c27b8a',
-                    backgroundColor: 'rgba(194, 123, 138, 0.12)',
-                    tension: 0.35,
-                    fill: true
-                }]
-            },
-            options: commonOptions
-        });
+            if (document.getElementById('bpChart')) {
+                new Chart(document.getElementById('bpChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dashboard_labels,
+                        datasets: [
+                            {
+                                label: 'Sistolica',
+                                data: dashboard_systolic,
+                                borderColor: '#9f5d70',
+                                backgroundColor: 'rgba(159, 93, 112, 0.08)',
+                                tension: 0.35
+                            },
+                            {
+                                label: 'Diastolica',
+                                data: dashboard_diastolic,
+                                borderColor: '#d18a98',
+                                backgroundColor: 'rgba(209, 138, 152, 0.08)',
+                                tension: 0.35
+                            }
+                        ]
+                    },
+                    options: commonOptions
+                });
+            }
+
+            if (document.getElementById('glucoseChart')) {
+                new Chart(document.getElementById('glucoseChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dashboard_labels,
+                        datasets: [{
+                            label: 'mg/dL',
+                            data: dashboard_glucose,
+                            borderColor: '#c27b8a',
+                            backgroundColor: 'rgba(194, 123, 138, 0.12)',
+                            tension: 0.35,
+                            fill: true
+                        }]
+                    },
+                    options: commonOptions
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Dashboard chart initialization error (AI chat will still work):', err);
     }
 })();
 </script>

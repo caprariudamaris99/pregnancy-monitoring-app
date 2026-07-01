@@ -20,6 +20,8 @@ class Config:
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file upload
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'app', 'uploads')
     ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'}
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4.1-mini')
 
 class DevelopmentConfig(Config):
     """Configurare pentru development."""

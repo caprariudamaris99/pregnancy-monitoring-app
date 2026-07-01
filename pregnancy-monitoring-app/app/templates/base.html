@@ -147,6 +147,37 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% if current_user.is_authenticated and current_user.role == 'patient' %}
+        <div class="ai-chat-shell" data-ai-chat data-endpoint="{{ url_for('common.ai_assistant_chat') }}">
+            <button class="ai-chat-fab" type="button" data-ai-chat-toggle aria-label="Deschide asistentul AI">
+                <i class="fas fa-comments"></i>
+            </button>
+            <section class="ai-chat-panel" data-ai-chat-panel hidden>
+                <div class="ai-chat-header">
+                    <div>
+                        <strong>Asistent medical AI</strong>
+                        <div class="small opacity-75">Raspunsuri orientative pe baza datelor tale din aplicatie</div>
+                    </div>
+                    <button class="btn btn-sm btn-link text-white text-decoration-none p-0" type="button" data-ai-chat-close aria-label="Inchide chatul">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="ai-chat-body" data-ai-chat-messages>
+                    <div class="ai-chat-bubble ai-chat-bubble-assistant">
+                     Buna. Pot raspunde folosind profilul tau medical, evolutia sarcinii, masuratorile, documentele, recomandarile, medicatia si discutia recenta cu medicul. Daca intrebarea necesita o decizie foarte personala sau urgenta, iti voi spune sa contactezi medicul.
+                    </div>
+                </div>
+                <form class="ai-chat-form" data-ai-chat-form>
+                    <textarea class="form-control" rows="3" data-ai-chat-input placeholder="Scrie intrebarea ta..."></textarea>
+                    <div class="d-flex justify-content-between align-items-center gap-2 mt-2">
+                        <small class="text-muted">Pentru urgente medicale contacteaza medicul sau serviciile de urgenta.</small>
+                        <button class="btn btn-primary" type="submit" data-ai-chat-submit>Trimite</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    {% endif %}
+
     <footer class="bg-light mt-5 py-4 border-top">
         <div class="container-fluid text-center text-muted">
             <p>&copy; 2026 Pregnancy-monitoring-app - Aplicatie medicala. Toate drepturile rezervate.</p>

@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Programări{% endblock %}
+{% block title %}Programari{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <h2 class="mb-4"><i class="fas fa-calendar"></i> Programări</h2>
+    <h2 class="mb-4"><i class="fas fa-calendar"></i> Programari</h2>
 
-    <!-- Filter buttons -->
     <div class="mb-4">
         <a href="{{ url_for('doctor.appointments', status='all') }}" class="btn btn-outline-secondary">Toate</a>
         <a href="{{ url_for('doctor.appointments', status='requested') }}" class="btn btn-outline-warning">Solicitate</a>
@@ -17,44 +16,48 @@
     {% if appointments %}
         <div class="card">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Data și Ora</th>
-                            <th>Pacientă</th>
-                            <th>Durată</th>
+                            <th>Data si Ora</th>
+                            <th>Pacienta</th>
+                            <th>Durata</th>
                             <th>Status</th>
-                            <th>Acțiuni</th>
+                            <th>Observatii</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for appt in appointments %}
-                            <tr>
+                            {% set is_completed = appt.status == 'completed' or appt.appointment_end < now %}
+                            <tr class="{% if is_completed %}text-muted opacity-75{% endif %}">
                                 <td><strong>{{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</strong></td>
                                 <td>{{ appt.patient.user.first_name }} {{ appt.patient.user.last_name }}</td>
                                 <td>{{ appt.duration_minutes }} min</td>
                                 <td>
-                                    {% if appt.status == 'confirmed' %}
-                                        <span class="badge bg-success">Confirmată</span>
+                                    {% if is_completed %}
+                                        <span class="badge bg-secondary">Realizata</span>
+                                    {% elif appt.status == 'confirmed' %}
+                                        <span class="badge bg-success">Confirmata</span>
                                     {% elif appt.status == 'requested' %}
-                                        <span class="badge bg-warning">Solicitată</span>
-                                    {% elif appt.status == 'completed' %}
-                                        <span class="badge bg-info">Realizată</span>
+                                        <span class="badge bg-warning text-dark">Solicitata</span>
+                                    {% elif appt.status == 'rejected' %}
+                                        <span class="badge bg-danger">Respinsa</span>
                                     {% else %}
                                         <span class="badge bg-secondary">{{ appt.status }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal{{ appt.id }}">
-                                        Detalii
-                                    </button>
                                     {% if appt.status == 'requested' %}
-                                        <form method="POST" action="{{ url_for('doctor.confirm_appointment', appointment_id=appt.id) }}" style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-success">Confirma</button>
-                                        </form>
-                                        <form method="POST" action="{{ url_for('doctor.reject_appointment', appointment_id=appt.id) }}" style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-danger">Respinge</button>
-                                        </form>
+                                        <div class="d-flex gap-2">
+                                            <form method="POST" action="{{ url_for('doctor.confirm_appointment', appointment_id=appt.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-success">Confirma</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('doctor.reject_appointment', appointment_id=appt.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-danger">Respinge</button>
+                                            </form>
+                                        </div>
+                                    {% else %}
+                                        {{ appt.notes or appt.doctor_recommendations or '-' }}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -64,33 +67,7 @@
             </div>
         </div>
     {% else %}
-        <div class="alert alert-info">
-            Nu aveți programări{% if status != 'all' %} cu status "{{ status }}"{% endif %}.
-        </div>
+        <div class="alert alert-info">Nu aveti programari{% if status != 'all' %} cu status "{{ status }}"{% endif %}.</div>
     {% endif %}
 </div>
-
-<!-- Modals -->
-{% for appt in appointments %}
-<div class="modal fade" id="detailsModal{{ appt.id }}" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalii Programare</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Data:</strong> {{ appt.appointment_start.strftime('%d.%m.%Y %H:%M') }}</p>
-                <p><strong>Pacientă:</strong> {{ appt.patient.user.first_name }} {{ appt.patient.user.last_name }}</p>
-                <p><strong>Durata:</strong> {{ appt.duration_minutes }} minute</p>
-                <p><strong>Status:</strong> {{ appt.status }}</p>
-                {% if appt.notes %}<p><strong>Note:</strong> {{ appt.notes }}</p>{% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Închide</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endfor %}
 {% endblock %}

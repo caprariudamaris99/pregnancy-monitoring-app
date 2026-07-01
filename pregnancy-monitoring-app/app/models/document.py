@@ -48,6 +48,8 @@ class MedicalRecommendation(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     visibility = db.Column(db.String(20), default='patient')  # patient / internal
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
     
     # Metadate
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

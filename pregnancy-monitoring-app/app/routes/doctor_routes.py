@@ -7,6 +7,7 @@ from app.models.appointment import Appointment, AppointmentStatus
 from app.models.document import Document, MedicalRecommendation
 from app.models.medication import Medication
 from app.models.message import Message, Notification, NotificationPreference
+from app.models.symptom import VitalSign
 from app.forms.medical_forms import (
     DoctorProfileForm,
     DoctorScheduleForm,
@@ -46,6 +47,48 @@ def _get_or_create_notification_preference(user_id):
         db.session.add(pref)
         db.session.commit()
     return pref
+
+
+def _cleanup_expired_patient_items(patient_id):
+    """Sterge automat recomandarile si medicatia expirate pentru pacienta."""
+    today = datetime.utcnow().date()
+    changed = False
+
+    expired_medications = Medication.query.filter(
+        Medication.patient_id == patient_id,
+        Medication.end_date.isnot(None),
+        Medication.end_date < today,
+    ).all()
+    for medication in expired_medications:
+        db.session.delete(medication)
+        changed = True
+
+    expired_recommendations = MedicalRecommendation.query.filter(
+        MedicalRecommendation.patient_id == patient_id,
+        MedicalRecommendation.end_date < today,
+    ).all()
+    for recommendation in expired_recommendations:
+        db.session.delete(recommendation)
+        changed = True
+
+    if changed:
+        db.session.commit()
+
+
+def _mark_completed_appointments_for_doctor(doctor_id):
+    """Actualizeaza consultatiile trecute ca realizate."""
+    now = datetime.utcnow()
+    completed = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status == AppointmentStatus.CONFIRMED.value,
+        Appointment.appointment_end < now,
+    ).all()
+    if not completed:
+        return
+
+    for appointment in completed:
+        appointment.status = AppointmentStatus.COMPLETED.value
+    db.session.commit()
 
 
 def _validate_work_interval_against_appointments(doctor_id, start_hour, end_hour):
@@ -395,15 +438,26 @@ def patient_details(patient_id):
         return redirect(url_for('doctor.patients'))
 
     pregnancy_info = patient.calculate_pregnancy_week()
-    vital_signs = patient.vital_signs[-10:] if patient.vital_signs else []
-    symptoms = patient.symptoms[-20:] if patient.symptoms else []
+    vital_signs = VitalSign.query.filter_by(patient_id=patient.id).order_by(VitalSign.measurement_date.desc()).limit(5).all()
+    chart_points = list(reversed(vital_signs))
+    chart_data = {
+        'labels': [v.measurement_date.strftime('%d.%m.%Y') for v in chart_points],
+        'weights': [float(v.weight_kg) if v.weight_kg is not None else 0 for v in chart_points],
+        'systolic': [float(v.systolic_bp) if v.systolic_bp is not None else 0 for v in chart_points],
+        'diastolic': [float(v.diastolic_bp) if v.diastolic_bp is not None else 0 for v in chart_points],
+        'glucose': [float(v.blood_glucose_mg_dl) if v.blood_glucose_mg_dl is not None else 0 for v in chart_points],
+    }
+    _cleanup_expired_patient_items(patient.id)
+    _mark_completed_appointments_for_doctor(doctor.id)
+
     documents = patient.documents
     appointments = patient.appointments
+    medications = Medication.query.filter_by(patient_id=patient.id, is_active=True).order_by(Medication.start_date.desc(), Medication.created_at.desc()).all()
 
     recommendations = MedicalRecommendation.query.filter_by(
         doctor_id=doctor.id,
         patient_id=patient.id,
-    ).all()
+    ).order_by(MedicalRecommendation.created_at.desc()).all()
 
     messages = Message.query.filter(
         ((Message.sender_id == current_user.id) & (Message.recipient_id == patient.user_id))
@@ -418,9 +472,10 @@ def patient_details(patient_id):
         patient=patient,
         pregnancy_info=pregnancy_info,
         vital_signs=vital_signs,
-        symptoms=symptoms,
+        chart_data=chart_data,
         documents=documents,
         appointments=appointments,
+        medications=medications,
         recommendations=recommendations,
         messages=messages,
         message_form=message_form,
@@ -436,14 +491,15 @@ def appointments():
         return redirect(url_for('common.dashboard'))
 
     doctor = current_user.doctor_profile
+    _mark_completed_appointments_for_doctor(doctor.id)
+
     appointments_list = Appointment.query.filter_by(doctor_id=doctor.id).order_by(Appointment.appointment_start).all()
 
     status_filter = request.args.get('status', 'all')
     if status_filter != 'all':
         appointments_list = [a for a in appointments_list if a.status == status_filter]
 
-    return render_template('doctor/appointments.html', appointments=appointments_list, status=status_filter)
-
+    return render_template('doctor/appointments.html', appointments=appointments_list, status=status_filter, now=datetime.utcnow())
 
 @bp.route('/appointment/<int:appointment_id>/confirm', methods=['POST'])
 @login_required
@@ -486,6 +542,16 @@ def reject_appointment(appointment_id):
         return redirect(url_for('doctor.appointments'))
 
     appointment.status = AppointmentStatus.REJECTED.value
+    pref = _get_or_create_notification_preference(appointment.patient.user_id)
+    if pref.enable_appointment_reminders:
+        db.session.add(Notification(
+            user_id=appointment.patient.user_id,
+            type='appointment_rejected',
+            title='Programare respinsa',
+            message=f'Programarea din {appointment.appointment_start.strftime("%d.%m.%Y %H:%M")} a fost respinsa de medic.',
+            related_object_type='Appointment',
+            related_object_id=appointment.id,
+        ))
     db.session.commit()
     flash('Programare respinsa.', 'success')
     return redirect(url_for('doctor.appointments'))
@@ -494,7 +560,7 @@ def reject_appointment(appointment_id):
 @bp.route('/recommendation/add/<int:patient_id>', methods=['GET', 'POST'])
 @login_required
 def add_recommendation(patient_id):
-    """Adauga recomandare medicala."""
+    """Adauga recomandare medicala sau medicatie."""
     if current_user.role != 'doctor':
         return redirect(url_for('common.dashboard'))
 
@@ -505,23 +571,71 @@ def add_recommendation(patient_id):
         flash('Acces neautorizat.', 'danger')
         return redirect(url_for('doctor.patients'))
 
-    form = RecommendationForm()
-    if form.validate_on_submit():
-        recommendation = MedicalRecommendation(
-            doctor_id=doctor.id,
-            patient_id=patient.id,
-            title=form.title.data,
-            description=form.description.data,
-            visibility=form.visibility.data,
-        )
-        db.session.add(recommendation)
-        db.session.commit()
+    recommendation_form = RecommendationForm(prefix='recommendation')
+    medication_form = MedicationForm(prefix='medication')
 
-        flash('Recomandare adaugata cu succes.', 'success')
-        return redirect(url_for('doctor.patient_details', patient_id=patient.id))
+    if request.method == 'GET':
+        today = datetime.utcnow().date()
+        recommendation_form.start_date.data = today
+        recommendation_form.end_date.data = today
+        medication_form.start_date.data = today
+        medication_form.end_date.data = today
 
-    return render_template('doctor/add_recommendation.html', form=form, patient=patient)
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
 
+        if form_type == 'recommendation' and recommendation_form.validate_on_submit():
+            if recommendation_form.end_date.data < recommendation_form.start_date.data:
+                flash('Perioada recomandarii este invalida.', 'danger')
+            else:
+                recommendation = MedicalRecommendation(
+                    doctor_id=doctor.id,
+                    patient_id=patient.id,
+                    title=recommendation_form.title.data,
+                    description=recommendation_form.description.data,
+                    visibility='patient',
+                    start_date=recommendation_form.start_date.data,
+                    end_date=recommendation_form.end_date.data,
+                )
+                db.session.add(recommendation)
+                db.session.commit()
+                flash('Recomandare adaugata cu succes.', 'success')
+                return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='recommendations'))
+
+        if form_type == 'medication' and medication_form.validate_on_submit():
+            if medication_form.end_date.data < medication_form.start_date.data:
+                flash('Perioada medicatiei este invalida.', 'danger')
+            else:
+                medication = Medication(
+                    patient_id=patient.id,
+                    prescribed_by_doctor_id=doctor.id,
+                    name=medication_form.name.data,
+                    dosage=medication_form.dosage.data,
+                    frequency=medication_form.frequency.data,
+                    duration=medication_form.duration.data,
+                    instructions=medication_form.instructions.data,
+                    warnings=medication_form.warnings.data,
+                    medication_type=medication_form.medication_type.data,
+                    start_date=medication_form.start_date.data,
+                    end_date=medication_form.end_date.data,
+                    is_active=True,
+                )
+                db.session.add(medication)
+                db.session.commit()
+                flash('Medicatia a fost adaugata cu succes.', 'success')
+                return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='recommendations'))
+
+        if form_type == 'recommendation':
+            flash('Recomandarea nu a putut fi salvata. Verificati campurile.', 'danger')
+        elif form_type == 'medication':
+            flash('Medicatia nu a putut fi salvata. Verificati campurile.', 'danger')
+
+    return render_template(
+        'doctor/add_recommendation.html',
+        patient=patient,
+        recommendation_form=recommendation_form,
+        medication_form=medication_form,
+    )
 
 @bp.route('/patient/<int:patient_id>/message/send', methods=['POST'])
 @login_required
@@ -603,7 +717,7 @@ def upload_patient_document(patient_id):
     else:
         flash('Documentul nu a putut fi incarcat. Verificati campurile.', 'danger')
 
-    return redirect(url_for('doctor.patient_details', patient_id=patient_id, tab='documents'))
+    return redirect(url_for('doctor.patient_details', patient_id=patient_id, tab='messages'))
 
 
 @bp.route('/patient/<int:patient_id>/document/<int:document_id>/download')
@@ -622,12 +736,12 @@ def download_patient_document(patient_id, document_id):
     document = Document.query.get_or_404(document_id)
     if document.patient_id != patient.id:
         flash('Documentul nu apartine acestei paciente.', 'danger')
-        return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='documents'))
+        return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='messages'))
 
     file_path = _resolve_document_path(document.file_path)
     if not os.path.exists(file_path):
         flash('Fisierul nu a fost gasit pe server.', 'danger')
-        return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='documents'))
+        return redirect(url_for('doctor.patient_details', patient_id=patient.id, tab='messages'))
 
     return send_file(
         file_path,
@@ -695,7 +809,8 @@ def messages():
     patients = doctor.patients if doctor else []
     form = MessageForm()
     preselected_recipient_id = request.args.get('recipient_user_id', type=int)
-    reply_subject = request.args.get('reply_subject', type=str)
+    document_form = DocumentUploadForm()
+    selected_patient = next((p for p in patients if p.user_id == preselected_recipient_id), None)
 
     if request.method == 'POST':
         recipient_user_id = request.form.get('recipient_user_id', type=int)
@@ -709,7 +824,7 @@ def messages():
             new_message = Message(
                 sender_id=current_user.id,
                 recipient_id=recipient_user_id,
-                subject=form.subject.data,
+                subject=None,
                 content=form.content.data,
             )
             db.session.add(new_message)
@@ -724,22 +839,73 @@ def messages():
                 ))
             db.session.commit()
             flash('Mesajul a fost trimis cu succes.', 'success')
-            return redirect(url_for('doctor.messages'))
+            return redirect(url_for('doctor.messages', recipient_user_id=recipient_user_id))
         flash('Mesajul nu a putut fi trimis. Verificati campurile.', 'danger')
-    elif reply_subject:
-        form.subject.data = reply_subject
 
-    messages = Message.query.filter(
-        (Message.sender_id == current_user.id) | (Message.recipient_id == current_user.id)
-    ).order_by(Message.sent_at.desc()).all()
+    messages = []
+    documents = []
+    if selected_patient:
+        messages = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.recipient_id == selected_patient.user_id))
+            | ((Message.sender_id == selected_patient.user_id) & (Message.recipient_id == current_user.id))
+        ).order_by(Message.sent_at.desc()).all()
+        documents = Document.query.filter_by(patient_id=selected_patient.id).order_by(Document.uploaded_at.desc()).all()
 
     return render_template(
         'doctor/messages.html',
         messages=messages,
         form=form,
+        document_form=document_form,
+        documents=documents,
         patients=patients,
         preselected_recipient_id=preselected_recipient_id,
+        selected_patient=selected_patient,
     )
+
+
+@bp.route('/messages/document/upload', methods=['POST'])
+@login_required
+def upload_document_from_messages():
+    """Incarca document din pagina de mesagerie pentru pacienta selectata."""
+    if current_user.role != 'doctor':
+        return redirect(url_for('common.dashboard'))
+
+    doctor = current_user.doctor_profile
+    recipient_user_id = request.form.get('recipient_user_id', type=int)
+    patient = Patient.query.filter_by(user_id=recipient_user_id, associated_doctor_id=doctor.id).first()
+    if not patient:
+        flash('Selectati o pacienta valida pentru incarcare document.', 'danger')
+        return redirect(url_for('doctor.messages'))
+
+    form = DocumentUploadForm()
+    if form.validate_on_submit() and form.document_file.data:
+        file = form.document_file.data
+        filename = secure_filename(file.filename)
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S_')
+        filename = timestamp + filename
+        filepath = os.path.join('uploads', filename)
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        file.save(filepath)
+
+        document = Document(
+            uploaded_by_user_id=current_user.id,
+            patient_id=patient.id,
+            file_name=file.filename,
+            file_path=filepath,
+            file_type=filename.split('.')[-1],
+            document_type=form.document_type.data,
+            lab_name=form.lab_name.data,
+            document_date=datetime.strptime(form.document_date.data, '%Y-%m-%d') if form.document_date.data else None,
+            uploaded_at=datetime.utcnow(),
+        )
+        db.session.add(document)
+        db.session.commit()
+        flash('Document incarcat cu succes.', 'success')
+    else:
+        flash('Documentul nu a putut fi incarcat. Verificati campurile.', 'danger')
+
+    return redirect(url_for('doctor.messages', recipient_user_id=recipient_user_id))
 
 
 @bp.route('/message/<int:message_id>/read', methods=['POST'])

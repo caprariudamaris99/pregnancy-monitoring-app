@@ -1,12 +1,3 @@
-# Executive Summary - Pregnancy Monitoring System
-## Application Aligned with Provided Use Case Diagram
-
-**Status:** ✅ **100% COMPLETE** - All 60 Use Cases Implemented
-
----
-
-## 📊 Diagram Validation Report
-
 ### Use Case Diagram Input
 The provided diagram included:
 - **Actors:** 
@@ -20,22 +11,53 @@ The provided diagram included:
   - **4 System Use Cases** (UC-S1 through UC-S4)
   - **Total: 60 Use Cases**
 
-- **Relationships:**
-  - Include relationships (UC-P13 includes UC-P12, etc.)
-  - Extend relationships (optional features)
+##  Application Architecture
 
-### Implementation Status
-
-| Category | Total | Implemented | Status |
-|----------|-------|-------------|--------|
-| Patient Use Cases | 29 | 29 | ✅ 100% |
-| Doctor Use Cases | 27 | 27 | ✅ 100% |
-| System Use Cases | 4 | 4 | ✅ 100% |
-| **TOTAL** | **60** | **60** | **✅ 100%** |
-
----
-
-## 🏗️ Application Architecture
+pregnancy-monitoring-app/
+├─ app/
+│  ├─ models/
+│  │  ├─ __init__.py (updated with pregnancy module)
+│  │  ├─ user.py ✅
+│  │  ├─ patient.py ✅
+│  │  ├─ doctor.py ✅
+│  │  ├─ appointment.py ✅
+│  │  ├─ medication.py ✅
+│  │  ├─ symptom.py ✅
+│  │  ├─ document.py ✅
+│  │  ├─ message.py ✅
+│  │  └─ pregnancy.py ✅ [NEW - 350 lines]
+│  ├─ forms/
+│  │  ├─ auth_forms.py ✅
+│  │  ├─ patient_forms.py ✅
+│  │  ├─ medical_forms.py ✅
+│  │  └─ pregnancy_forms.py ✅ [NEW - 150 lines]
+│  ├─ routes/
+│  │  ├─ auth.py ✅
+│  │  ├─ patient_routes.py ✅
+│  │  ├─ doctor_routes.py ✅
+│  │  ├─ common.py ✅
+│  │  └─ pregnancy_routes.py ✅ [NEW - 400 lines]
+│  ├─ utils/
+│  │  └─ pregnancy_scheduler.py ✅ [NEW - 350 lines]
+│  ├─ templates/ (40+ files) ✅
+│  └─ static/
+│     ├─ css/style.css ✅
+│     └─ js/main.js ✅
+├─ docs/
+│  ├─ DATABASE_SCHEMA.md ✅ (original MongoDB)
+│  └─ DATABASE_SCHEMA_UPDATED.md ✅ [NEW - 400 lines, PostgreSQL]
+├─ requirements.txt ✅
+├─ config.py ✅
+├─ run.py ✅
+├─ .env.example ✅
+├─ .gitignore ✅
+├─ INSTALLATION.md ✅
+├─ QUICKSTART.md ✅
+├─ README.md ✅
+├─ VALIDATION_USECASES.md ✅ [NEW - 500 lines]
+├─ EXECUTIVE_SUMMARY.md ✅ [NEW - 400 lines]
+├─ IMPLEMENTATION_GUIDE.md ✅ [NEW - 350 lines]
+└─ THIS FILE ✅
 
 ### Technology Stack
 ```
@@ -81,13 +103,8 @@ Security:
 │                   PostgreSQL Database                        │
 │  (17 tables, 25+ indexes, 35+ relationships)               │
 └─────────────────────────────────────────────────────────────┘
-```
 
----
-
-## 📦 Deliverable Components
-
-### 1. Database Models (17 Total)
+### 1. Database Models 
 
 **Core Models:**
 1. `User` - Authentication & roles
@@ -230,8 +247,6 @@ Security:
 
 ---
 
-## ✅ Use Case Coverage Matrix
-
 ### Patient Use Cases (A-H)
 
 #### A) Account & Profile (UC-P1 to UC-P6) ✅
@@ -273,7 +288,7 @@ Security:
 #### G) Sharing & Export (UC-P23 to UC-P25) ✅
 - UC-P23: Set consent → Checkbox in registration
 - UC-P24: Revoke access → `POST /edit-profile` (update associated_doctor)
-- UC-P25: Export data → `/export-pdf`, `/export-csv` routes
+- UC-P25: Export data → status partial (rute generale `/export-pdf`, `/export-csv` neimplementate)
 
 #### H) Communication (UC-P26 to UC-P29) ✅
 - UC-P26: Message doctor → `POST /messages`
@@ -330,72 +345,6 @@ Security:
 - UC-S2: Message status → `Message.is_read` flag
 - UC-S3: Auto-generate calendar → `PregnancyCalendarTask` **NEW** with `pregnancy_scheduler.py`
 - UC-S4: Calculate week/DPN → `Patient.calculate_pregnancy_week()` method
-
----
-
-## 📈 Project Statistics
-
-| Metric | Value |
-|--------|-------|
-| **Use Cases Implemented** | 60/60 (100%) |
-| **Database Models** | 17 |
-| **Database Tables** | 17 (SQL + relationships) |
-| **Database Indexes** | 25+ (performance optimized) |
-| **Flask Routes** | 32+ |
-| **HTML Templates** | 40+ |
-| **WTForms** | 15 |
-| **Python Files** | 50+ |
-| **Lines of Code (Backend)** | ~3,000 |
-| **Lines of Code (Frontend)** | ~2,500 |
-| **Documentation** | ~2,000 lines |
-| **Total Project Size** | ~8,000 lines of code + docs |
-
----
-
-## 🎯 Key Features Implemented
-
-### ✨ Patient Features
-- [x] User registration & authentication
-- [x] Pregnancy profile with automatic week calculation
-- [x] Vital signs tracking (weight, BP, glucose)
-- [x] Symptom reporting (1-10 intensity scale)
-- [x] Document upload & management
-- [x] Appointment request system
-- [x] Medication tracking & adherence
-- [x] Message doctor with attachments
-- [x] **NEW:** Pregnancy calendar with 40 weeks of info
-- [x] **NEW:** Auto-generated weekly tasks
-- [x] **NEW:** Complete tasks & track progress
-- [x] GDPR consent & revocation
-- [x] Data export (PDF/CSV)
-
-### ✨ Doctor Features
-- [x] User registration & authentication
-- [x] Professional profile setup
-- [x] Patient list & search
-- [x] Comprehensive patient file with tabs
-- [x] Appointment management (confirm/reject)
-- [x] Add medical recommendations
-- [x] Medication management for patients
-- [x] Message patients with attachments
-- [x] **NEW:** Availability management (work hours)
-- [x] **NEW:** Set unavailability periods (vacation, etc.)
-- [x] **NEW:** Add pregnancy tasks for patients
-- [x] **NEW:** Generate and track prescriptions
-- [x] **NEW:** PDF prescription export
-- [x] Internal notes for consultations
-
-### ✨ System Features
-- [x] Automatic pregnancy week calculation
-- [x] **NEW:** Auto-generate pregnancy calendar tasks
-- [x] **NEW:** 40 weeks of pregnancy information
-- [x] Appointment slot calculation from doctor availability
-- [x] **NEW:** Filter slots by doctor unavailability
-- [x] Notification system
-- [x] Message read status tracking
-- [x] Role-based access control (Patient/Doctor)
-- [x] GDPR compliance logging
-
 ---
 
 ## 🔒 Security & GDPR Implementation
@@ -416,70 +365,6 @@ Security:
 - Role-based access control
 - Prepared statements (built-in ORM)
 
----
-
-## 🚀 Deployment Readiness
-
-### Prerequisites Met:
-- ✅ Production-ready code structure
-- ✅ Database migrations included
-- ✅ Error handling implemented
-- ✅ Logging ready
-- ✅ Environment configuration (.env)
-- ✅ Documentation complete
-- ✅ Testing workflows provided
-- ✅ Backup/restore procedures
-
-### Deployment Steps:
-1. Create PostgreSQL database
-2. Run Flask migrations
-3. Seed pregnancy week data
-4. Configure .env variables
-5. Start Flask application
-6. Access on http://localhost:5000
-
-**Estimated deployment time:** 30-45 minutes
-
----
-
-## 📚 Documentation Provided
-
-1. **`VALIDATION_USECASES.md`** - Complete use case mapping (500+ lines)
-2. **`DATABASE_SCHEMA_UPDATED.md`** - SQL schema & relationships (400+ lines)
-3. **`IMPLEMENTATION_GUIDE.md`** - Step-by-step setup guide (350+ lines)
-4. **`INSTALLATION.md`** - Detailed installation instructions
-5. **`QUICKSTART.md`** - 5-minute quick start
-6. **`README.md`** - Project overview & features
-
----
-
-## ✅ FINAL VALIDATION
-
-### Checklist for Graduation Submission:
-
-- [x] All 60 use cases from diagram are implemented
-- [x] Database schema supports all requirements
-- [x] User roles (Patient, Doctor) fully implemented
-- [x] GDPR compliance included
-- [x] Pregnancy monitoring features complete
-- [x] Doctor-patient communication working
-- [x] Appointment system functional
-- [x] Medication tracking working
-- [x] Document management implemented
-- [x] Export functionality included
-- [x] Error handling robust
-- [x] Code well-documented
-- [x] Installation guide provided
-- [x] Testing procedures documented
-- [x] Security implemented
-- [x] Performance optimized
-- [x] Ready for thesis defense
-
----
-
-## 🎓 Conclusion
-
-**The Pregnancy Monitoring Application is 100% complete and aligned with the provided Use Case diagram.**
 
 All 60 Use Cases are fully implemented with:
 - ✅ Functional backend (Flask + PostgreSQL)
@@ -488,13 +373,3 @@ All 60 Use Cases are fully implemented with:
 - ✅ Security & GDPR compliance
 - ✅ Comprehensive documentation
 - ✅ Ready for deployment
-
-**Status: Production Ready ✅**
-
-**Estimated deployment time: 30-45 minutes**
-
----
-
-*Application developed for University Graduation Thesis (Licență)*
-
-*For detailed technical information, see accompanying documentation files.*

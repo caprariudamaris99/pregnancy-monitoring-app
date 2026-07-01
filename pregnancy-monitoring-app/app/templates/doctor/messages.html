@@ -3,38 +3,70 @@
 {% block title %}Mesaje{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid messaging-page">
     <h2 class="mb-4"><i class="fas fa-envelope"></i> Mesagerie</h2>
 
     <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Trimite mesaj</h5>
-        </div>
         <div class="card-body">
             {% if patients %}
-                <form method="POST" action="{{ url_for('doctor.messages') }}">
-                    {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        <label class="form-label" for="recipient_user_id">Pacienta</label>
-                        <select class="form-select" id="recipient_user_id" name="recipient_user_id" required>
-                            <option value="">Selectati pacienta</option>
-                            {% for p in patients %}
-                                <option value="{{ p.user_id }}" {% if preselected_recipient_id and p.user_id == preselected_recipient_id %}selected{% endif %}>
-                                    {{ p.user.first_name }} {{ p.user.last_name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        {{ form.subject.label(class="form-label") }}
-                        {{ form.subject(class="form-control", placeholder="Subiect (optional)") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.content.label(class="form-label") }}
-                        {{ form.content(class="form-control", rows="4", placeholder="Scrieti mesajul...") }}
-                    </div>
-                    <button type="submit" class="btn btn-primary">Trimite mesaj</button>
+                <form method="GET" action="{{ url_for('doctor.messages') }}" class="mb-4">
+                    <label class="form-label" for="recipient_user_id">Pacienta</label>
+                    <select class="form-select" id="recipient_user_id" name="recipient_user_id" onchange="this.form.submit()">
+                        <option value="">Selectati pacienta</option>
+                        {% for p in patients %}
+                            <option value="{{ p.user_id }}" {% if preselected_recipient_id and p.user_id == preselected_recipient_id %}selected{% endif %}>
+                                {{ p.user.first_name }} {{ p.user.last_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </form>
+
+                {% if selected_patient %}
+                    <form method="POST" action="{{ url_for('doctor.messages', recipient_user_id=selected_patient.user_id) }}">
+                        {{ form.hidden_tag() }}
+                        <input type="hidden" name="recipient_user_id" value="{{ selected_patient.user_id }}">
+                        <div class="d-flex align-items-center mb-2 gap-2">
+                            <label class="form-label mb-0" for="{{ form.content.id }}">Mesaj</label>
+                            <button class="btn btn-link text-decoration-none p-0 message-clip" type="button" data-bs-toggle="collapse" data-bs-target="#doctorDocumentUpload" title="Incarca document" aria-label="Incarca document">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.content(class="form-control", rows="4", placeholder="Scrieti mesajul...") }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Trimite mesaj</button>
+                    </form>
+
+                    <div class="collapse mt-3" id="doctorDocumentUpload">
+                        <div class="border rounded p-3 bg-light">
+                            <form method="POST" action="{{ url_for('doctor.upload_document_from_messages') }}" enctype="multipart/form-data">
+                                {{ document_form.hidden_tag() }}
+                                <input type="hidden" name="recipient_user_id" value="{{ selected_patient.user_id }}">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ document_form.document_file.label(class="form-label") }}
+                                        {{ document_form.document_file(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ document_form.document_type.label(class="form-label") }}
+                                        {{ document_form.document_type(class="form-select") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ document_form.lab_name.label(class="form-label") }}
+                                        {{ document_form.lab_name(class="form-control") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ document_form.document_date.label(class="form-label") }}
+                                        {{ document_form.document_date(class="form-control", placeholder="YYYY-MM-DD") }}
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Incarca document</button>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-light border mb-0">Selectati o pacienta pentru a vedea istoricul mesageriei.</div>
+                {% endif %}
             {% else %}
                 <div class="alert alert-warning mb-0">
                     Nu aveti paciente asociate pentru mesagerie.
@@ -43,52 +75,78 @@
         </div>
     </div>
 
-    {% if messages %}
-        <div class="card">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>De/Catre</th>
-                            <th>Subiect</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                            <th>Actiuni</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for msg in messages %}
-                            <tr class="{% if not msg.is_read and msg.recipient_id == current_user.id %}table-active{% endif %}">
-                                <td>
-                                    {% if msg.sender_id == current_user.id %}
-                                        <strong>Catre:</strong> {{ msg.recipient.first_name }} {{ msg.recipient.last_name }}
-                                    {% else %}
-                                        <strong>De la:</strong> {{ msg.sender.first_name }} {{ msg.sender.last_name }}
-                                    {% endif %}
-                                </td>
-                                <td>{{ msg.subject or '(Fara subiect)' }}</td>
-                                <td><small>{{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
-                                <td>
-                                    {% if msg.is_read %}
-                                        <span class="badge bg-success">Citit</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">Necitit</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#messageModal{{ msg.id }}">
-                                        <i class="fas fa-eye"></i> Vezi
+    {% if selected_patient %}
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-body">
+                        {% if messages %}
+                            <div class="message-history">
+                                {% for msg in messages %}
+                                    {% set preview = msg.content[:120] ~ ('...' if msg.content|length > 120 else '') %}
+                                    <button class="message-row {% if not msg.is_read and msg.recipient_id == current_user.id %}message-row-unread{% endif %}" type="button" data-bs-toggle="modal" data-bs-target="#messageModal{{ msg.id }}">
+                                        <span class="message-row-text">
+                                            {% if msg.sender_id == current_user.id %}
+                                                <span class="message-row-author">Tu:</span>
+                                            {% else %}
+                                                <span class="message-row-author">{{ selected_patient.user.first_name }}:</span>
+                                            {% endif %}
+                                            {{ preview }}
+                                        </span>
+                                        <span class="message-row-meta">
+                                            <span class="message-status" title="{% if msg.sender_id == current_user.id %}{% if msg.is_read %}Citit{% elif msg.recipient.last_login and msg.recipient.last_login >= msg.sent_at %}Primit{% else %}Trimis{% endif %}{% else %}{% if msg.is_read %}Citit{% else %}Primit{% endif %}{% endif %}">
+                                                {% if msg.sender_id == current_user.id %}
+                                                    {% if msg.is_read %}
+                                                        <i class="fas fa-check-double text-info"></i>
+                                                    {% elif msg.recipient.last_login and msg.recipient.last_login >= msg.sent_at %}
+                                                        <i class="fas fa-check-double text-muted"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-check text-muted"></i>
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% if msg.is_read %}
+                                                        <i class="fas fa-check-double text-info"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-check-double text-muted"></i>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </span>
+                                            <span>{{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                        </span>
                                     </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">Nu exista mesaje pentru aceasta pacienta.</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            Nu aveti mesaje.
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="mb-3">Documente incarcate</h6>
+                        {% if documents %}
+                            <div class="document-history">
+                                {% for doc in documents %}
+                                    <div class="document-row">
+                                        <div>
+                                            <div class="fw-semibold">{{ doc.file_name }}</div>
+                                            <div class="small text-muted">{{ doc.document_type }} | {{ doc.uploaded_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                                        </div>
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('doctor.download_patient_document', patient_id=selected_patient.id, document_id=doc.id) }}">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">Nu exista documente incarcate pentru aceasta pacienta.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
     {% endif %}
 </div>
@@ -98,21 +156,12 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{{ msg.subject or 'Mesaj' }}</h5>
+                <h5 class="modal-title">{% if msg.sender_id == current_user.id %}Mesaj trimis{% else %}Mesaj primit{% endif %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                {% set reply_target_user_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id %}
-                <p><strong>De/Catre:</strong>
-                    {% if msg.sender_id == current_user.id %}
-                        {{ msg.recipient.first_name }} {{ msg.recipient.last_name }}
-                    {% else %}
-                        {{ msg.sender.first_name }} {{ msg.sender.last_name }}
-                    {% endif %}
-                </p>
-                <p><strong>Data:</strong> {{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</p>
-                <hr>
-                <p>{{ msg.content }}</p>
+                <p class="text-muted mb-2">{{ msg.sent_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                <p class="mb-0">{{ msg.content }}</p>
             </div>
             <div class="modal-footer">
                 {% if not msg.is_read and msg.recipient_id == current_user.id %}
@@ -120,9 +169,6 @@
                         <button type="submit" class="btn btn-success">Marcheaza citit</button>
                     </form>
                 {% endif %}
-                <a class="btn btn-primary" href="{{ url_for('doctor.messages', recipient_user_id=reply_target_user_id, reply_subject='Re: ' ~ (msg.subject or 'Mesaj')) }}">
-                    Raspunde
-                </a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Inchide</button>
             </div>
         </div>
